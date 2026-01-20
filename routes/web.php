@@ -1,7 +1,45 @@
 <?php
 
+use App\Http\Controllers\Authentication\AuthController;
+use App\Http\Controllers\Authentication\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+
+// Route::get('/', function () {
+//     return redirect()->route('login');
+// });
+
+Route::middleware('guest')->group(function () {
+    // Login
+    Route::get('login', [AuthController::class, 'create'])->name('login');
+    Route::post('login', [AuthController::class, 'store']);
+
+    // Reset Password
+    Route::get('forgot-password', [PasswordResetController::class, 'create'])
+        ->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'store'])
+        ->name('password.email');
+    Route::get('reset-password/{token}', [PasswordResetController::class, 'edit'])
+        ->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'update'])
+        ->name('password.update');
+});
+
+Route::middleware('auth')->group(function () {
+    // Logout
+    Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
+
+    // Dashboard Super Admin
+    Route::get('/admin/dashboard', function () {
+        return "Welcome Super Admin!";
+    })->name('dashboard.admin');
+
+    // Dashboard User
+    Route::get('/dashboard', function () {
+        return "Welcome, " . auth()->user()->name . " (" . auth()->user()->getRoleNames()->first() . ") ";
+    })->name('dashboard.index');
+
+});
 
 // dashboard pages
 Route::get('/', function () {
