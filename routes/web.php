@@ -1,13 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\WilayahController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Authentication\PasswordResetController;
+use App\Http\Controllers\PJU\PJUController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
-
-// Route::get('/', function () {
-//     return redirect()->route('login');
-// });
 
 Route::middleware('guest')->group(function () {
     // Login
@@ -29,18 +27,28 @@ Route::middleware('auth')->group(function () {
     // Logout
     Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
 
-    // Dashboard Super Admin
-    Route::get('/admin/dashboard', function () {
-        return "Welcome Super Admin!";
-    })->name('dashboard.admin');
-
-    // Dashboard User
+    // User
     Route::get('/dashboard', function () {
-        return "Welcome, " . auth()->user()->name . " (" . auth()->user()->getRoleNames()->first() . ") ";
+        return view('pages.user.dashboard.index');
     })->name('dashboard.index');
 
+    Route::resource('pju', PJUController::class);
+
+    // Super Admin
+    Route::middleware(['role:super_admin'])->prefix('admin')->group(function () {
+        Route::get('/dashboard', function () {
+            return view('pages.admin.dashboard.index');
+        })->name('dashboard.admin');
+
+        Route::resource('wilayah', WilayahController::class);
+    });
+
+    // Route::get('/admin/dashboard', function () {
+    //     return "Welcome Super Admin!";
+    // })->name('dashboard.admin');
 });
 
+// ---=== TEMPLATE ===---
 // dashboard pages
 Route::get('/', function () {
     return view('pages.dashboard.ecommerce', ['title' => 'E-commerce Dashboard']);
