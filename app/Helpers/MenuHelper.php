@@ -83,9 +83,9 @@ class MenuHelper
                             'icon' => 'list',
                             'path' => '#',
                             'subItems' => [
-                                ['name' => 'Laporan PJU', 'path' => '/admin/users'],
-                                ['name' => 'Laporan Realisasi', 'path' => '/admin/roles'],
-                                ['name' => 'Hasil Data Petugas', 'path' => '/admin/roles'],
+                                ['name' => 'Rekapitulasi PJU dan IDPEL', 'path' => '/pju/meterisasi'],
+                                ['name' => 'Visual PJU', 'path' => '/pju/visual'],
+                                ['name' => 'Hasil Data Petugas', 'path' => '/pju/officer_performance'],
                             ]
                         ],
                     ],

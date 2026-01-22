@@ -51,9 +51,20 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Relasi ke Rayon/ULP.
+     */
     public function rayon(): BelongsTo
     {
         return $this->belongsTo(Rayon::class);
+    }
+
+    /**
+     * Relasi ke PJU.
+     */
+    public function pjus(): HasMany
+    {
+        return $this->hasMany(PJU::class);
     }
 
     /**

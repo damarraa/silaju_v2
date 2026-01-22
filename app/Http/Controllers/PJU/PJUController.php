@@ -10,6 +10,7 @@ use App\Models\Area;
 use App\Models\PJU;
 use App\Models\Rayon;
 use App\Models\Trafo;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -230,6 +231,77 @@ class PJUController extends Controller
     }
 
     /**
+     * Report Data PJU dan ID Pelanggan.
+     */
+    public function meterisasiIndex(Request $request)
+    {
+        $query = $this->getFilteredQuery($request);
+
+        $pjus = $query->orderByRaw('id_pelanggan IS NULL')
+            ->orderBy('id_pelanggan', 'asc')
+            ->paginate(25)
+            ->withQueryString();
+
+        $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
+        $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
+        return view('pages.pju.meterisasi', compact('pjus', 'areas', 'trafos'));
+    }
+
+    /**
+     * Report Data PJU dan Foto.
+     */
+    public function visualIndex(Request $request)
+    {
+        $query = $this->getFilteredQuery($request);
+        $pjus = $query->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
+        $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
+
+        return view('pages.pju.visual', compact('pjus', 'areas', 'trafos'));
+    }
+
+    /**
+     * Report Data Petugas.
+     */
+    public function officerPerformance(Request $request)
+    {
+        $query = User::query();
+        $query->with('rayon');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('rayon', function ($r) use ($search) {
+                        $r->where('nama', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('rayon_id')) {
+            $query->where('rayon_id', $request->rayon_id);
+        }
+
+        $officers = $query->withCount([
+            'pjus' => function ($q) {
+                // Opsional: Jika ingin menghitung hanya PJU yang valid/verified
+                // $q->where('verification_status', 'verified');
+            }
+        ])
+            ->whereHas('pjus')
+            ->orderByDesc('pjus_count')
+            ->paginate(20)
+            ->withQueryString();
+
+        $rayons = Rayon::orderBy('nama')->get();
+        return view('pages.pju.officer_performance', compact('officers', 'rayons'));
+    }
+
+    /**
      * Export Excel.
      */
     public function exportExcel(Request $request)
@@ -242,7 +314,7 @@ class PJUController extends Controller
      * Export PDF.
      */
     public function exportPdf(Request $request)
-    {        
+    {
         $pjus = $this->getFilteredQuery($request)->get();
 
         $pdf = Pdf::loadView('exports.pju_pdf', compact('pjus'))

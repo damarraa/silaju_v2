@@ -32,10 +32,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/ajax/rayons/{areaId}', [WilayahController::class, 'getRayonsByArea'])->name('ajax.rayons');
 
     // PJU
-    Route::get('pju/verification', [PJUController::class, 'verificationIndex'])->name('pju.verification');
     Route::get('pju/gallery', [PJUController::class, 'gallery'])->name('pju.gallery');
+    Route::get('pju/meterisasi', [PJUController::class, 'meterisasiIndex'])->name('pju.meterisasi');
+    Route::get('pju/visual', [PJUController::class, 'visualIndex'])->name('pju.visual');
+    Route::get('pju/officers', [PJUController::class, 'visualIndex'])->name('officers');
     Route::get('pju/export/excel', [PJUController::class, 'exportExcel'])->name('pju.export.excel');
     Route::get('pju/export/pdf', [PJUController::class, 'exportPdf'])->name('pju.export.pdf');
+    Route::get('pju/verification', [PJUController::class, 'verificationIndex'])->name('pju.verification');
     Route::post('pju/{pju}/verify', [PJUController::class, 'verify']);
     Route::resource('pju', PJUController::class);
 
