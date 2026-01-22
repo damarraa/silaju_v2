@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\Admin\WilayahController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Authentication\PasswordResetController;
 use App\Http\Controllers\PJU\PJUController;
+use App\Http\Controllers\Trafo\TrafoController;
+use App\Http\Controllers\Wilayah\WilayahController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 
@@ -27,25 +28,32 @@ Route::middleware('auth')->group(function () {
     // Logout
     Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
 
+    // Helper
+    Route::get('/ajax/rayons/{areaId}', [WilayahController::class, 'getRayonsByArea'])->name('ajax.rayons');
+
+    // PJU
+    Route::get('pju/verification', [PJUController::class, 'verificationIndex'])->name('pju.verification');
+    Route::get('pju/gallery', [PJUController::class, 'gallery'])->name('pju.gallery');
+    Route::get('pju/export/excel', [PJUController::class, 'exportExcel'])->name('pju.export.excel');
+    Route::get('pju/export/pdf', [PJUController::class, 'exportPdf'])->name('pju.export.pdf');
+    Route::post('pju/{pju}/verify', [PJUController::class, 'verify']);
+    Route::resource('pju', PJUController::class);
+
+    // Trafo
+    Route::get('trafo/gallery', [TrafoController::class, 'gallery'])->name('trafo.gallery');
+    Route::resource('trafo', TrafoController::class);
+
     // User
     Route::get('/dashboard', function () {
         return view('pages.user.dashboard.index');
     })->name('dashboard.index');
-
-    Route::resource('pju', PJUController::class);
 
     // Super Admin
     Route::middleware(['role:super_admin'])->prefix('admin')->group(function () {
         Route::get('/dashboard', function () {
             return view('pages.admin.dashboard.index');
         })->name('dashboard.admin');
-
-        Route::resource('wilayah', WilayahController::class);
     });
-
-    // Route::get('/admin/dashboard', function () {
-    //     return "Welcome Super Admin!";
-    // })->name('dashboard.admin');
 });
 
 // ---=== TEMPLATE ===---

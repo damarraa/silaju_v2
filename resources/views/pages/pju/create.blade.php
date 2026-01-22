@@ -1,12 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- CSS Leaflet --}}
-    @push('styles')
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    @endpush
-
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 class="text-title-md2 font-bold text-black dark:text-white">
             Input Data Lapangan
@@ -16,17 +10,17 @@
     <div class="rounded-lg border border-gray-200 bg-white shadow-default dark:border-gray-800 dark:bg-gray-900">
 
         <form action="{{ route('pju.store') }}" method="POST" enctype="multipart/form-data" class="p-4 md:p-6.5" x-data="{ 
-                                        statusPJU: '{{ old('status') }}',
-                                        lat: '{{ old('latitude') }}',
-                                        lng: '{{ old('longitude') }}',
-                                        previewImage: null,
-                                        handleFileChange(event) {
-                                            const file = event.target.files[0];
-                                            if (file) {
-                                                this.previewImage = URL.createObjectURL(file);
-                                            }
-                                        }
-                                    }">
+                                                            statusPJU: '{{ old('status') }}',
+                                                            lat: '{{ old('latitude') }}',
+                                                            lng: '{{ old('longitude') }}',
+                                                            previewImage: null,
+                                                            handleFileChange(event) {
+                                                                const file = event.target.files[0];
+                                                                if (file) {
+                                                                    this.previewImage = URL.createObjectURL(file);
+                                                                }
+                                                            }
+                                                        }">
             @csrf
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -68,37 +62,37 @@
 
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
-                            2. Titik Koordinat
+                            2. Titik Koordinat <span class="text-error-500">*</span>
                         </label>
 
-                        <div
-                            class="relative overflow-hidden rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100">
-                            <div id="map" class="h-[200px] w-full z-0"></div>
-
-                            <button type="button" id="btn-get-loc"
-                                class="absolute bottom-2 right-2 z-[400] flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 shadow-md border border-gray-200 hover:bg-gray-50">
-                                <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                                    </path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                Lokasi Saya
-                            </button>
+                        <div class="mb-4">
+                            <x-form.map-picker :lat="old('latitude', -0.5071)" :lng="old('longitude', 101.4478)" />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4 mt-3">
+                        <div
+                            class="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                             <div>
-                                <label class="block text-[10px] uppercase font-bold text-gray-500 mb-1">Latitude</label>
-                                <input type="text" id="latitude_input" name="latitude" x-model="lat" placeholder="0.000000"
-                                    class="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-xs font-medium text-gray-600 focus:border-brand-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400" />
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500 uppercase">Unit Area <span
+                                        class="text-error-500">*</span></label>
+                                <select name="area_id" id="area_id"
+                                    class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-600 dark:text-white">
+                                    <option value="">Pilih Area</option>
+                                    @foreach($areas as $area)
+                                        <option value="{{ $area->id }}" {{ old('area_id') == $area->id ? 'selected' : '' }}>
+                                            {{ $area->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('area_id') <span class="text-xs text-error-500 mt-1">{{ $message }}</span> @enderror
                             </div>
                             <div>
-                                <label class="block text-[10px] uppercase font-bold text-gray-500 mb-1">Longitude</label>
-                                <input type="text" id="longitude_input" name="longitude" x-model="lng"
-                                    placeholder="0.000000"
-                                    class="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-xs font-medium text-gray-600 focus:border-brand-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400" />
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500 uppercase">Unit Rayon <span
+                                        class="text-error-500">*</span></label>
+                                <select name="rayon_id" id="rayon_id" disabled
+                                    class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-600 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed">
+                                    <option value="">Pilih Area Dulu</option>
+                                </select>
+                                @error('rayon_id') <span class="text-xs text-error-500 mt-1">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
@@ -106,14 +100,16 @@
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="mb-1 block text-xs font-medium text-gray-500">PROVINSI</label>
+                                <label class="mb-1 block text-xs font-medium text-gray-500">PROVINSI <span
+                                        class="text-error-500">*</span></label>
                                 <select id="provinsi" name="provinsi"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="">Memuat...</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1 block text-xs font-medium text-gray-500">KAB/KOTA</label>
+                                <label class="mb-1 block text-xs font-medium text-gray-500">KAB/KOTA <span
+                                        class="text-error-500">*</span></label>
                                 <select id="kabupaten" name="kabupaten" disabled
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800">
                                     <option value="">-</option>
@@ -122,14 +118,16 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="mb-1 block text-xs font-medium text-gray-500">KECAMATAN</label>
+                                <label class="mb-1 block text-xs font-medium text-gray-500">KECAMATAN <span
+                                        class="text-error-500">*</span></label>
                                 <select id="kecamatan" name="kecamatan" disabled
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800">
                                     <option value="">-</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1 block text-xs font-medium text-gray-500">KELURAHAN</label>
+                                <label class="mb-1 block text-xs font-medium text-gray-500">KELURAHAN <span
+                                        class="text-error-500">*</span></label>
                                 <select id="kelurahan" name="kelurahan" disabled
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800">
                                     <option value="">-</option>
@@ -137,7 +135,8 @@
                             </div>
                         </div>
                         <div>
-                            <label class="mb-1 block text-xs font-medium text-gray-500">DETAIL ALAMAT</label>
+                            <label class="mb-1 block text-xs font-medium text-gray-500">DETAIL ALAMAT <span
+                                    class="text-error-500">*</span></label>
                             <textarea name="alamat" rows="2" placeholder="Nama Jalan, Gg, No. Rumah"
                                 class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2 text-sm dark:border-gray-700 dark:text-white">{{ old('alamat') }}</textarea>
                         </div>
@@ -148,13 +147,37 @@
 
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
-                            3. Identitas PJU
+                            3. Identitas PJU <span class="text-error-500">*</span>
                         </label>
 
                         <div class="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                             <div>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                                    Sumber Gardu (Trafo) <span class="text-error-500">*</span>
+                                </label>
+                                <div class="relative z-20 bg-transparent">
+                                    <select name="trafo_id"
+                                        class="dark:bg-dark-900 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
+                                        <option value="">Pilih Gardu / Trafo</option>
+                                        @foreach($trafos as $trafo)
+                                            <option value="{{ $trafo->id }}" {{ old('trafo_id') == $trafo->id ? 'selected' : '' }}>
+                                                {{ $trafo->id_gardu }} - {{ Str::limit($trafo->alamat, 30) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <span class="absolute top-1/2 right-4 z-30 -translate-y-1/2 text-gray-500">
+                                        <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                            <path d="M4.79175 7.396L10.0001 12.6043L15.2084 7.396" stroke-width="1.5"
+                                                stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1">*Pilih gardu yang mensupply listrik PJU ini.</p>
+                            </div>
+
+                            <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Status
-                                    Meter</label>
+                                    Meter <span class="text-error-500">*</span></label>
                                 <select name="status" x-model="statusPJU"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="">Pilih Status</option>
@@ -192,12 +215,12 @@
 
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
-                            4. Spesifikasi Teknis
+                            4. Spesifikasi Teknis <span class="text-error-500">*</span>
                         </label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Jenis
-                                    Lampu</label>
+                                    Lampu <span class="text-error-500">*</span></label>
                                 <input list="jenis-list" name="jenis_lampu"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white"
                                     placeholder="Ketik/Pilih...">
@@ -210,8 +233,8 @@
                                 </datalist>
                             </div>
                             <div>
-                                <label
-                                    class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Merk</label>
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Merk <span
+                                        class="text-error-500">*</span></label>
                                 <input list="merk-list" name="merk_lampu"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white"
                                     placeholder="Ketik/Pilih...">
@@ -225,7 +248,7 @@
                             </div>
                             <div>
                                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Jumlah
-                                    Titik</label>
+                                    Titik <span class="text-error-500">*</span></label>
                                 <input type="number" name="jumlah_lampu" value="1"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white" />
                             </div>
@@ -240,11 +263,12 @@
 
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
-                            5. Operasional
+                            5. Operasional <span class="text-error-500">*</span>
                         </label>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Kondisi</label>
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Kondisi <span
+                                        class="text-error-500">*</span></label>
                                 <select name="kondisi_lampu"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="baik">Baik</option>
@@ -252,7 +276,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Tindak Lanjut</label>
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Tindak Lanjut <span
+                                        class="text-error-500">*</span></label>
                                 <select name="tindak_lanjut"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="dibiarkan">Dibiarkan</option>
@@ -261,7 +286,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Panel Kontrol</label>
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Panel Kontrol <span
+                                        class="text-error-500">*</span></label>
                                 <select name="sistem_operasi"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="photo_cell">Photo Cell</option>
@@ -270,7 +296,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Installasi</label>
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Installasi <span
+                                        class="text-error-500">*</span></label>
                                 <select name="installasi"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="kabel_udara">Kabel Udara</option>
@@ -278,7 +305,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Kepemilikan</label>
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Kepemilikan <span
+                                        class="text-error-500">*</span></label>
                                 <select name="kepemilikan"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="pemda">PEMDA</option>
@@ -286,7 +314,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Peruntukan</label>
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Peruntukan <span
+                                        class="text-error-500">*</span></label>
                                 <select name="peruntukan"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="jalan">Jalan Umum</option>
@@ -295,7 +324,8 @@
                                 </select>
                             </div>
                             <div class="col-span-2">
-                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Menyala Siang Hari?</label>
+                                <label class="mb-1.5 block text-xs font-medium text-gray-500">Menyala Siang Hari? <span
+                                        class="text-error-500">*</span></label>
                                 <select name="nyala_siang"
                                     class="dark:bg-dark-900 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm focus:border-brand-300 dark:border-gray-700 dark:text-white">
                                     <option value="0">Tidak (Normal)</option>
@@ -324,141 +354,40 @@
 @endsection
 
 @push('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // --- AJAX: AREA -> RAYON ---
+            const sArea = document.getElementById('area_id');
+            const sRayon = document.getElementById('rayon_id');
 
-            /* =====================================================
-             * 1. INIT MAP & MARKER
-             * ===================================================== */
+            sArea.addEventListener('change', function() {
+                const areaId = this.value;
+                sRayon.innerHTML = '<option value="">Memuat...</option>';
+                sRayon.disabled = true;
 
-            const defaultLat = parseFloat("{{ old('latitude', '-0.5071') }}");
-            const defaultLng = parseFloat("{{ old('longitude', '101.4478') }}");
-
-            const map = L.map('map', {
-                scrollWheelZoom: false
-            }).setView([defaultLat, defaultLng], 13);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-
-            let marker = L.marker([defaultLat, defaultLng], {
-                draggable: true,
-                autoPan: true
-            }).addTo(map);
-
-            // FIX TailAdmin Grid / Hidden render
-            setTimeout(() => {
-                map.invalidateSize();
-                marker.setLatLng([defaultLat, defaultLng]);
-            }, 300);
-
-            /* =====================================================
-             * 2. INPUT ELEMENT
-             * ===================================================== */
-
-            const latInput = document.getElementById('latitude_input');
-            const lngInput = document.getElementById('longitude_input');
-
-            function syncInput(lat, lng) {
-                const latVal = lat.toFixed(6);
-                const lngVal = lng.toFixed(6);
-
-                latInput.value = latVal;
-                lngInput.value = lngVal;
-
-                // Alpine-safe update (NO bubbling, NO re-render)
-                if (latInput._x_model) latInput._x_model.set(latVal);
-                if (lngInput._x_model) lngInput._x_model.set(lngVal);
-            }
-
-            function setLatLng(lat, lng, zoom = null) {
-                marker.setLatLng([lat, lng]).addTo(map);
-                map.panTo([lat, lng]);
-                if (zoom) map.setZoom(zoom);
-                syncInput(lat, lng);
-            }
-
-            // Init sync
-            syncInput(defaultLat, defaultLng);
-
-            /* =====================================================
-             * 3. MARKER ➜ INPUT (DRAG)
-             * ===================================================== */
-
-            marker.on('dragend', function () {
-                const pos = marker.getLatLng();
-                syncInput(pos.lat, pos.lng);
+                if (areaId) {
+                    fetch(`{{ url('/ajax/rayons') }}/${areaId}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            sRayon.innerHTML = '<option value="">Pilih Rayon</option>';
+                            data.forEach(rayon => {
+                                const option = document.createElement('option');
+                                option.value = rayon.id;
+                                option.text = rayon.nama;
+                                sRayon.appendChild(option);
+                            });
+                            sRayon.disabled = false;
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            sRayon.innerHTML = '<option value="">Gagal memuat rayon</option>';
+                        });
+                } else {
+                    sRayon.innerHTML = '<option value="">Pilih Area Dulu</option>';
+                }
             });
 
-            /* =====================================================
-             * 4. INPUT ➜ MAP (MANUAL EDIT)
-             * ===================================================== */
-
-            function updateFromInput() {
-                const lat = parseFloat(latInput.value);
-                const lng = parseFloat(lngInput.value);
-
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    marker.setLatLng([lat, lng]);
-                    map.panTo([lat, lng]);
-                }
-            }
-
-            latInput.addEventListener('change', updateFromInput);
-            lngInput.addEventListener('change', updateFromInput);
-
-            /* =====================================================
-             * 5. GEOLOCATION BUTTON
-             * ===================================================== */
-
-            const btnLoc = document.getElementById('btn-get-loc');
-
-            btnLoc.addEventListener('click', function () {
-
-                if (!navigator.geolocation) {
-                    alert("Browser tidak mendukung GPS");
-                    return;
-                }
-
-                btnLoc.disabled = true;
-                btnLoc.innerHTML = "Mencari...";
-
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-
-                        setLatLng(lat, lng, 17);
-
-                        btnLoc.innerHTML = `
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Ditemukan
-                        `;
-                        btnLoc.disabled = false;
-                    },
-                    () => {
-                        alert("Gagal mendapatkan lokasi GPS");
-                        btnLoc.innerHTML = "Lokasi Saya";
-                        btnLoc.disabled = false;
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000
-                    }
-                );
-            });
-
-            /* =====================================================
-             * 6. API WILAYAH (TIDAK DIUBAH)
-             * ===================================================== */
-
+            // --- API Wilayah (EMSIFA) ---
             const baseUrl = "https://www.emsifa.com/api-wilayah-indonesia/api";
             const sProv = document.getElementById('provinsi');
             const sKab = document.getElementById('kabupaten');

@@ -3,10 +3,23 @@
 namespace App\Http\Controllers\Wilayah;
 
 use App\Http\Controllers\Controller;
+use App\Models\Rayon;
 use Illuminate\Http\Request;
 
 class WilayahController extends Controller
 {
+    /**
+     * Helper Dynamic Dropdown
+     */
+    public function getRayonsByArea($areaId)
+    {
+        $rayons = Rayon::where('area_id', $areaId)
+            ->select('id', 'nama', 'kode_rayon')
+            ->orderBy('nama')
+            ->get();
+        return response()->json($rayons);
+    }
+
     /**
      * Display a listing of the resource.
      */

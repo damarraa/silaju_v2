@@ -15,13 +15,35 @@ class Rayon extends Model
         'nama'
     ];
 
+    /**
+     * Relasi ke User.
+     */
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
+    /**
+     * Relasi ke Area/UP3.
+     */
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class);
+    }
+
+    /**
+     * Relasi ke PJU.
+     */
+    public function pjus(): HasMany
+    {
+        return $this->hasMany(PJU::class);
+    }
+
+    /**
+     * Relasi ke Trafo.
+     */
+    public function trafos(): HasMany
+    {
+        return $this->hasMany(Trafo::class);
     }
 }

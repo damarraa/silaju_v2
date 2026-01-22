@@ -26,9 +26,12 @@ class StorePJURequest extends FormRequest
         return [
             'status' => 'required|in:meterisasi,non_meterisasi,ilegal',
             'id_pelanggan' => 'required_if:status,meterisasi|nullable|string',
+            'trafo_id' => 'nullable|exists:trafos,id',
             'daya' => 'required_if:status,meterisasi|nullable|string',
-
+            
             // Lokasi
+            'area_id' => 'required|exists:areas,id',
+            'rayon_id' => 'required|exists:rayons,id',
             'alamat' => 'required|string',
             'kelurahan' => 'required|string',
             'kecamatan' => 'required|string',

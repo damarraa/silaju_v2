@@ -2,22 +2,34 @@
 
 namespace App\Http\Controllers\PJU;
 
+use App\Exports\PJUExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PJU\StorePJURequest;
+use App\Http\Requests\PJU\UpdatePJURequest;
+use App\Models\Area;
 use App\Models\PJU;
+use App\Models\Rayon;
+use App\Models\Trafo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PJUController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return redirect()->route('pju.create');
+        $query = $this->getFilteredQuery($request);
+        $pjus = $query->latest()->paginate(15)->withQueryString();
+
+        $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
+        $areas = Area::where('wilayah_id', 1)->get();
+        return view('pages.pju.index', compact('pjus', 'trafos', 'areas'));
     }
 
     /**
@@ -25,7 +37,9 @@ class PJUController extends Controller
      */
     public function create()
     {
-        return view('pages.pju.create');
+        $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
+        $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
+        return view('pages.pju.create', compact('trafos', 'areas'));
     }
 
     /**
@@ -35,6 +49,7 @@ class PJUController extends Controller
     {
         $data = $request->validated();
         $data['user_id'] = auth()->id();
+        $data['verification_status'] = 'pending';
 
         // Formatting
         $data['jenis_lampu'] = strtoupper(trim($request->jenis_lampu));
@@ -68,18 +83,25 @@ class PJUController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(PJU $pju)
     {
-        // Buat view edit nanti
-        return view('pages.pju.edit', compact('pju'));
+        $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
+        $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
+        $rayons = Rayon::where('area_id', $pju->area_id)->orderBy('nama')->get();
+        return view('pages.pju.edit', compact('pju', 'trafos', 'areas', 'rayons'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(StorePJURequest $request, PJU $pju)
+    public function update(UpdatePJURequest $request, PJU $pju)
     {
         $data = $request->validated();
+
+        // Reset Status Verifikasi
+        $data['verification_status'] = 'pending';
+        $data['verified_at'] = null;
+        $data['verified_by'] = null;
 
         // Formatting
         $data['jenis_lampu'] = strtoupper(trim($request->jenis_lampu));
@@ -119,6 +141,114 @@ class PJUController extends Controller
         $pju->delete();
         return redirect()->route('pju.index')
             ->with('success', 'Data PJU berhasil dihapus.');
+    }
+
+    /**
+     * Galeri Foto PJU.
+     */
+    public function gallery(Request $request)
+    {
+        $query = PJU::with(['trafo', 'area', 'rayon']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('id_pelanggan', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('trafo_id'))
+            $query->where('trafo_id', $request->trafo_id);
+        if ($request->filled('area_id'))
+            $query->where('area_id', $request->area_id);
+        if ($request->filled('rayon_id'))
+            $query->where('rayon_id', $request->rayon_id);
+        if ($request->filled('status'))
+            $query->where('status', $request->status);
+        if ($request->filled('kondisi'))
+            $query->where('kondisi_lampu', $request->kondisi);
+        if ($request->filled('verification_status'))
+            $query->where('verification_status', $request->verification_status);
+
+        $pjus = $query->latest()->paginate(24)->withQueryString();
+
+        $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
+        $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
+        return view('pages.pju.gallery', compact('pjus', 'trafos', 'areas'));
+    }
+
+    /**
+     * Verifikasi di Halaman Detail.
+     */
+    public function verify(Request $request, PJU $pju)
+    {
+        $request->validate([
+            'status' => 'required|in:approve,reject'
+        ]);
+
+        $status = $request->input('status') === 'approve' ? 'verified' : 'rejected';
+
+        $pju->update([
+            'verification_status' => $status,
+            'verified_at' => now(),
+            'verified_by' => auth()->id(),
+        ]);
+
+        $message = $status === 'verified' ? 'Data berhasil Diverifikasi.' : 'Data berhasil Ditolak.';
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Khusus Verifikator.
+     */
+    public function verificationIndex(Request $request)
+    {
+        $statusFilter = $request->get('verification_status', 'pending');
+        $query = PJU::with(['trafo', 'area', 'rayon']);
+
+        if ($request->filled('verification_status')) {
+            $query->where('verification_status', $request->verification_status);
+        } else {
+            $query->where('verification_status', 'pending');
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('id_pelanggan', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('area_id'))
+            $query->where('area_id', $request->area_id);
+        if ($request->filled('rayon_id'))
+            $query->where('rayon_id', $request->rayon_id);
+
+        $pjus = $query->latest()->paginate(15)->withQueryString();
+        $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
+        return view('pages.pju.verification', compact('pjus', 'areas', 'statusFilter'));
+    }
+
+    /**
+     * Export Excel.
+     */
+    public function exportExcel(Request $request)
+    {
+        $query = $this->getFilteredQuery($request);
+        return Excel::download(new PJUExport($query), 'laporan-pju-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export PDF.
+     */
+    public function exportPdf(Request $request)
+    {        
+        $pjus = $this->getFilteredQuery($request)->get();
+
+        $pdf = Pdf::loadView('exports.pju_pdf', compact('pjus'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('laporan-pju-' . date('Y-m-d') . '.pdf');
     }
 
     /**
@@ -201,5 +331,48 @@ class PJUController extends Controller
         if (!File::exists($path)) {
             File::makeDirectory($path, 0755, true, true);
         }
+    }
+
+    /**
+     * Filter logic.
+     */
+    private function getFilteredQuery(Request $request)
+    {
+        $query = PJU::with(['trafo', 'area', 'rayon']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('id_pelanggan', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhere('merk_lampu', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('trafo_id')) {
+            $query->where('trafo_id', $request->trafo_id);
+        }
+
+        if ($request->filled('area_id')) {
+            $query->where('area_id', $request->area_id);
+        }
+
+        if ($request->filled('rayon_id')) {
+            $query->where('rayon_id', $request->rayon_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('kondisi')) {
+            $query->where('kondisi_lampu', $request->kondisi);
+        }
+
+        if ($request->filled('verification_status')) {
+            $query->where('verification_status', $request->verification_status);
+        }
+
+        return $query;
     }
 }
