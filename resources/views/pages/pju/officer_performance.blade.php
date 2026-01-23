@@ -75,12 +75,13 @@
                         <th class="px-6 py-4 font-bold text-sm uppercase">Nama Rayon</th>
                         <th class="px-6 py-4 font-bold text-sm uppercase">Kode Petugas</th>
                         <th class="px-6 py-4 font-bold text-sm uppercase">Nama Petugas</th>
-                        <th class="px-6 py-4 font-bold text-sm uppercase text-right">Jumlah Input</th>
+                        <th class="px-6 py-4 font-bold text-sm uppercase text-right">Kinerja Input</th> {{-- Ganti Title
+                        --}}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-gray-900">
                     @forelse($officers as $officer)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition group">
                             <td class="px-6 py-4 text-center text-sm text-gray-600 dark:text-gray-400">
                                 {{ ($officers->currentPage() - 1) * $officers->perPage() + $loop->iteration }}
                             </td>
@@ -90,23 +91,19 @@
                             </td>
 
                             <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                {{ $officer->rayon->nama ?? 'Rayon Tidak Diketahui' }}
+                                {{ $officer->rayon->nama ?? '-' }}
                             </td>
 
                             <td class="px-6 py-4 text-sm text-gray-500 font-mono dark:text-gray-400">
                                 {{-- Gunakan ID atau NIP jika ada kolom khusus --}}
-                                {{ str_pad($officer->id, 5, '0', STR_PAD_LEFT) }}
+                                {{ str_pad($officer->identity_number ?? $officer->id, 5, '0', STR_PAD_LEFT) }}
                             </td>
 
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="h-9 w-9 rounded-full overflow-hidden bg-gray-200 border border-gray-300 dark:border-gray-700">
-                                        {{-- Avatar Placeholder --}}
-                                        <svg class="h-full w-full text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-                                        </svg>
+                                        class="h-9 w-9 rounded-full overflow-hidden bg-brand-100 border border-brand-200 flex items-center justify-center text-brand-700 font-bold text-xs">
+                                        {{ substr($officer->name, 0, 2) }}
                                     </div>
                                     <div>
                                         <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $officer->name }}</p>
@@ -115,11 +112,26 @@
                                 </div>
                             </td>
 
+                            {{-- MODIFIKASI KOLOM AKSI --}}
                             <td class="px-6 py-4 text-right">
-                                <span
-                                    class="inline-flex items-center justify-center min-w-[3rem] px-3 py-1 rounded-full text-sm font-bold bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
-                                    {{ $officer->pjus_count }} Data
-                                </span>
+                                <div class="flex flex-col items-end gap-1.5">
+                                    {{-- 1. Badge Angka (Lebih Menonjol) --}}
+                                    <span
+                                        class="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
+                                        {{ $officer->pjus_count }} Data
+                                    </span>
+
+                                    {{-- 2. Link Rincian (Rapih di bawahnya) --}}
+                                    <a href="{{ route('pju.officers.detail', $officer->id) }}"
+                                        class="group flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-brand-600 transition-colors">
+                                        Lihat Rincian
+                                        <svg class="w-3 h-3 transition-transform group-hover:translate-x-1" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty

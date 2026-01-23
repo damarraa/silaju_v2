@@ -32,14 +32,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/ajax/rayons/{areaId}', [WilayahController::class, 'getRayonsByArea'])->name('ajax.rayons');
 
     // PJU
-    Route::get('pju/gallery', [PJUController::class, 'gallery'])->name('pju.gallery');
-    Route::get('pju/meterisasi', [PJUController::class, 'meterisasiIndex'])->name('pju.meterisasi');
-    Route::get('pju/visual', [PJUController::class, 'visualIndex'])->name('pju.visual');
-    Route::get('pju/officers', [PJUController::class, 'visualIndex'])->name('officers');
-    Route::get('pju/export/excel', [PJUController::class, 'exportExcel'])->name('pju.export.excel');
-    Route::get('pju/export/pdf', [PJUController::class, 'exportPdf'])->name('pju.export.pdf');
-    Route::get('pju/verification', [PJUController::class, 'verificationIndex'])->name('pju.verification');
-    Route::post('pju/{pju}/verify', [PJUController::class, 'verify']);
+    Route::prefix('pju')->name('pju.')->group(function () {
+        Route::get('gallery', [PJUController::class, 'gallery'])->name('gallery');
+        Route::get('meterisasi', [PJUController::class, 'meterisasiIndex'])->name('meterisasi');
+        Route::get('visual', [PJUController::class, 'visualIndex'])->name('visual');
+        Route::get('realisasi', [PJUController::class, 'realisasiIndex'])->name('realisasi');
+        Route::get('officers', [PJUController::class, 'officerPerformance'])->name('officers');
+        Route::get('officers/{user}', [PJUController::class, 'officerDetail'])->name('officers.detail');
+        Route::get('officers/{user}/export/excel', [PJUController::class, 'officerDetailExportExcel'])->name('officers.export.excel');
+        Route::get('officers/{user}/export/pdf', [PJUController::class, 'officerDetailExportPdf'])->name('officers.export.pdf');
+        Route::get('export/excel', [PJUController::class, 'exportExcel'])->name('export.excel');
+        Route::get('export/pdf', [PJUController::class, 'exportPdf'])->name('export.pdf');
+        Route::get('verification', [PJUController::class, 'verificationIndex'])->name('verification');
+        Route::post('{pju}/verify', [PJUController::class, 'verify']);
+    });
+
     Route::resource('pju', PJUController::class);
 
     // Trafo

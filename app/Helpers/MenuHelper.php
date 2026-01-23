@@ -56,7 +56,7 @@ class MenuHelper
                         ],
                         [
                             'name' => 'Data Photo',
-                            'icon' => 'list',
+                            'icon' => 'image',
                             'path' => '#',
                             'subItems' => [
                                 ['name' => 'Photo LPJU', 'path' => '/pju/gallery'],
@@ -80,12 +80,13 @@ class MenuHelper
                     'items' => [
                         [
                             'name' => 'Laporan',
-                            'icon' => 'list',
+                            'icon' => 'clipboard',
                             'path' => '#',
                             'subItems' => [
-                                ['name' => 'Rekapitulasi PJU dan IDPEL', 'path' => '/pju/meterisasi'],
-                                ['name' => 'Visual PJU', 'path' => '/pju/visual'],
-                                ['name' => 'Hasil Data Petugas', 'path' => '/pju/officer_performance'],
+                                ['name' => 'Laporan PJU dan IDPEL', 'path' => '/pju/meterisasi'],
+                                ['name' => 'Laporan Visual PJU', 'path' => '/pju/visual'],
+                                ['name' => 'Laporan Realisasi', 'path' => '/pju/realisasi'],
+                                ['name' => 'Hasil Data Petugas', 'path' => '/pju/officers'],
                             ]
                         ],
                     ],

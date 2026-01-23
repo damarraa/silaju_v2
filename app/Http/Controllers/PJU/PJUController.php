@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\PJU;
 
+use App\Exports\OfficerDetailExport;
 use App\Exports\PJUExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PJU\StorePJURequest;
@@ -13,6 +14,7 @@ use App\Models\Trafo;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -264,6 +266,74 @@ class PJUController extends Controller
     }
 
     /**
+     * Report Realisasi.
+     */
+    public function realisasiIndex(Request $request)
+    {
+        $query = PJU::select('trafo_id')
+            ->with('trafo')
+            // 1. Group METERISASI
+            ->selectRaw("COUNT(CASE WHEN status = 'meterisasi' THEN 1 END) as met_count")
+            ->selectRaw("SUM(CASE WHEN status = 'meterisasi' THEN watt ELSE 0 END) as met_watt")
+            ->selectRaw("SUM(CASE WHEN status = 'meterisasi' THEN daya ELSE 0 END) as met_va")
+            // 2. Group NON-METERISASI
+            ->selectRaw("COUNT(CASE WHEN status = 'non_meterisasi' THEN 1 END) as non_count")
+            ->selectRaw("SUM(CASE WHEN status = 'non_meterisasi' THEN watt ELSE 0 END) as non_watt")
+            ->selectRaw("SUM(CASE WHEN status = 'non_meterisasi' THEN daya ELSE 0 END) as non_va")
+            // 3. Group KONDISI RUSAK (Status apapun, yang penting rusak)
+            ->selectRaw("COUNT(CASE WHEN kondisi_lampu = 'rusak' THEN 1 END) as rusak_count")
+            ->selectRaw("SUM(CASE WHEN kondisi_lampu = 'rusak' THEN watt ELSE 0 END) as rusak_watt")
+            ->selectRaw("SUM(CASE WHEN kondisi_lampu = 'rusak' THEN daya ELSE 0 END) as rusak_va")
+            // 4. TOTAL KESELURUHAN (Titik Lampu)
+            ->selectRaw("COUNT(id) as total_titik")
+            ->groupBy('trafo_id');
+
+        $query->whereHas('trafo', function ($q) use ($request) {
+
+            // Filter Search ID Gardu
+            if ($request->filled('search')) {
+                $q->where('id_gardu', 'like', "%{$request->search}%");
+            }
+            // Filter Rayon
+            if ($request->filled('rayon_id')) {
+                $q->where('rayon_id', $request->rayon_id);
+            }
+            // Filter Kabupaten
+            if ($request->filled('kabupaten')) {
+                $q->where('kabupaten', $request->kabupaten);
+            }
+            // Filter Kecamatan
+            if ($request->filled('kecamatan')) {
+                $q->where('kecamatan', $request->kecamatan);
+            }
+            // Filter Kelurahan
+            if ($request->filled('kelurahan')) {
+                $q->where('kelurahan', $request->kelurahan);
+            }
+        });
+
+        $realisasi = $query->paginate(20)->withQueryString();
+        $rayons = Rayon::orderBy('nama')->get();
+        $kabupatens = Trafo::select('kabupaten')->distinct()->whereNotNull('kabupaten')->orderBy('kabupaten')->pluck('kabupaten');
+
+        $kecamatans = [];
+        if ($request->filled('kabupaten')) {
+            $kecamatans = Trafo::select('kecamatan')
+                ->where('kabupaten', $request->kabupaten)
+                ->distinct()->orderBy('kecamatan')->pluck('kecamatan');
+        }
+
+        $kelurahans = [];
+        if ($request->filled('kecamatan')) {
+            $kelurahans = Trafo::select('kelurahan')
+                ->where('kecamatan', $request->kecamatan)
+                ->distinct()->orderBy('kelurahan')->pluck('kelurahan');
+        }
+
+        return view('pages.pju.realisasi', compact('realisasi', 'rayons', 'kabupatens', 'kecamatans', 'kelurahans'));
+    }
+
+    /**
      * Report Data Petugas.
      */
     public function officerPerformance(Request $request)
@@ -299,6 +369,46 @@ class PJUController extends Controller
 
         $rayons = Rayon::orderBy('nama')->get();
         return view('pages.pju.officer_performance', compact('officers', 'rayons'));
+    }
+
+    /**
+     * Detail Report Data Petugas.
+     */
+    public function officerDetail(Request $request, User $user)
+    {
+        $query = $this->getDetailQuery($request, $user->id);
+
+        $details = $query->orderByDesc('total_input')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('pages.pju.officer_detail', compact('user', 'details'));
+    }
+
+    /**
+     * Export Excel - Rincian Data Petugas.
+     */
+    public function officerDetailExportExcel(Request $request, User $user)
+    {
+        $query = $this->getDetailQuery($request, $user->id);
+        $filename = 'Laporan_Kinerja_' . str_replace(' ', '_', $user->name) . '_' . date('Ymd') . '.xlsx';
+
+        return Excel::download(new OfficerDetailExport($query, $user), $filename);
+    }
+
+    /**
+     * Export PDF - Rincian Data Petugas.
+     */
+    public function officerDetailExportPdf(Request $request, User $user)
+    {
+        $details = $this->getDetailQuery($request, $user->id)
+            ->orderByDesc('total_input')
+            ->get();
+
+        $pdf = Pdf::loadView('exports.officer_detail_pdf', compact('user', 'details'));
+        $filename = 'Laporan_Kinerja_' . str_replace(' ', '_', $user->name) . '_' . date('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**
@@ -406,7 +516,28 @@ class PJUController extends Controller
     }
 
     /**
-     * Filter logic.
+     * Private Helper: Query filter logic untuk Rincian Gardu.
+     */
+    private function getDetailQuery($request, $userId)
+    {
+        $query = PJU::select('trafo_id', DB::raw('count(*) as total_input'))
+            ->with('trafo')
+            ->where('user_id', $userId)
+            ->groupBy('trafo_id');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('trafo', function ($q) use ($search) {
+                $q->where('id_gardu', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Private Helper: Query filter logic.
      */
     private function getFilteredQuery(Request $request)
     {
