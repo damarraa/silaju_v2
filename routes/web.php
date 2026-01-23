@@ -4,6 +4,7 @@ use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Authentication\PasswordResetController;
 use App\Http\Controllers\PJU\PJUController;
 use App\Http\Controllers\Trafo\TrafoController;
+use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Wilayah\WilayahController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
@@ -27,7 +28,8 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     // Logout
     Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
-
+    // User Management
+    Route::resource('users', UserController::class);
     // Helper
     Route::get('/ajax/rayons/{areaId}', [WilayahController::class, 'getRayonsByArea'])->name('ajax.rayons');
 
@@ -37,6 +39,9 @@ Route::middleware('auth')->group(function () {
         Route::get('meterisasi', [PJUController::class, 'meterisasiIndex'])->name('meterisasi');
         Route::get('visual', [PJUController::class, 'visualIndex'])->name('visual');
         Route::get('realisasi', [PJUController::class, 'realisasiIndex'])->name('realisasi');
+        Route::get('rekap-jenis', [PJUController::class, 'rekapJenisIndex'])->name('rekap.jenis');
+        Route::get('rekap-harian', [PJUController::class, 'dailyRecapIndex'])->name('rekap.harian');
+        Route::get('rekap-total', [PJUController::class, 'rekapTotalIndex'])->name('rekap.total');
         Route::get('officers', [PJUController::class, 'officerPerformance'])->name('officers');
         Route::get('officers/{user}', [PJUController::class, 'officerDetail'])->name('officers.detail');
         Route::get('officers/{user}/export/excel', [PJUController::class, 'officerDetailExportExcel'])->name('officers.export.excel');

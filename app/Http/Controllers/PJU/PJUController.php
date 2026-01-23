@@ -334,6 +334,141 @@ class PJUController extends Controller
     }
 
     /**
+     * Rekap Jenis Lampu PJU.
+     */
+    public function rekapJenisIndex(Request $request)
+    {
+        $filterPju = function ($query) use ($request) {
+            if ($request->filled('search')) {
+                $query->where('jenis_lampu', 'like', "%{$request->search}%");
+            }
+        };
+
+        $query = Trafo::query()
+            ->with(['pjus' => $filterPju])
+            ->whereHas('pjus', $filterPju);
+
+        if ($request->filled('search')) {
+            $query->where('id_gardu', 'like', "%{$request->search}%")
+                ->orWhere('alamat', 'like', "%{$request->search}%");
+        }
+        if ($request->filled('rayon_id'))
+            $query->where('rayon_id', $request->rayon_id);
+        if ($request->filled('kabupaten'))
+            $query->where('kabupaten', $request->kabupaten);
+        if ($request->filled('kecamatan'))
+            $query->where('kecamatan', $request->kecamatan);
+        if ($request->filled('kelurahan'))
+            $query->where('kelurahan', $request->kelurahan);
+
+        $trafos = $query->orderBy('id_gardu')->paginate(10)->withQueryString();
+        $rayons = Rayon::orderBy('nama')->get();
+        $kabupatens = Trafo::select('kabupaten')->whereNotNull('kabupaten')->distinct()->orderBy('kabupaten')->pluck('kabupaten');
+
+        $kecamatans = [];
+        if ($request->filled('kabupaten')) {
+            $kecamatans = Trafo::select('kecamatan')->where('kabupaten', $request->kabupaten)->distinct()->orderBy('kecamatan')->pluck('kecamatan');
+        }
+
+        $kelurahans = [];
+        if ($request->filled('kecamatan')) {
+            $kelurahans = Trafo::select('kelurahan')->where('kecamatan', $request->kecamatan)->distinct()->orderBy('kelurahan')->pluck('kelurahan');
+        }
+
+        return view('pages.pju.rekap_jenis', compact('trafos', 'rayons', 'kabupatens', 'kecamatans', 'kelurahans'));
+    }
+
+    /**
+     * Rekap Harian.
+     */
+    public function dailyRecapIndex(Request $request)
+    {
+        $startDate = $request->input('start_date', date('Y-m-d'));
+        $endDate = $request->input('end_date', date('Y-m-d'));
+
+        $query = PJU::with(['user', 'trafo', 'rayon', 'area'])
+            ->latest();
+
+        $query->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate);
+
+        if ($request->filled('rayon_id')) {
+            $query->where('rayon_id', $request->rayon_id);
+        }
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('nyala_siang')) {
+            $query->where('nyala_siang', true);
+        }
+
+        $pjus = $query->paginate(20)->withQueryString();
+        $rayons = Rayon::orderBy('nama')->get();
+
+        $officersQuery = User::query();
+        if ($request->filled('rayon_id')) {
+            $officersQuery->where('rayon_id', $request->rayon_id);
+        }
+        $officers = $officersQuery->orderBy('name')->get();
+
+        return view('pages.pju.rekap_harian', compact('pjus', 'rayons', 'officers', 'startDate', 'endDate'));
+    }
+
+    /**
+     * Rekap Total.
+     */
+    public function rekapTotalIndex(Request $request)
+    {
+        $groupBy = $request->input('group_by', 'gardu');
+        $query = PJU::query();
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date)
+                ->whereDate('created_at', '<=', $request->end_date);
+        }
+        if ($request->filled('nyala_siang')) {
+            $query->where('nyala_siang', true);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('kabupaten')) {
+            $query->whereHas('trafo', function ($q) use ($request) {
+                $q->where('kabupaten', $request->kabupaten);
+            });
+        }
+
+        if ($groupBy == 'rayon') {
+            $query->select('rayon_id')
+                ->with('rayon')
+                ->groupBy('rayon_id');
+        } else {
+            $query->select('trafo_id')
+                ->with('trafo')
+                ->groupBy('trafo_id');
+
+            if ($request->filled('rayon_id')) {
+                $query->where('rayon_id', $request->rayon_id);
+            }
+        }
+
+        $query->selectRaw('COUNT(id) as total_titik')
+            ->selectRaw('SUM(watt) as total_watt')
+            ->selectRaw("COUNT(CASE WHEN status = 'meterisasi' THEN 1 END) as count_meter")
+            ->selectRaw("COUNT(CASE WHEN status = 'non_meterisasi' THEN 1 END) as count_non")
+            ->selectRaw("COUNT(CASE WHEN status = 'ilegal' THEN 1 END) as count_ilegal")
+            ->selectRaw("COUNT(CASE WHEN nyala_siang = 1 THEN 1 END) as count_nyala_siang");
+
+        $data = $query->paginate(20)->withQueryString();
+
+        $rayons = Rayon::orderBy('nama')->get();
+        $kabupatens = Trafo::select('kabupaten')->whereNotNull('kabupaten')->distinct()->orderBy('kabupaten')->pluck('kabupaten');
+
+        return view('pages.pju.rekap_total', compact('data', 'rayons', 'kabupatens', 'groupBy'));
+    }
+
+    /**
      * Report Data Petugas.
      */
     public function officerPerformance(Request $request)

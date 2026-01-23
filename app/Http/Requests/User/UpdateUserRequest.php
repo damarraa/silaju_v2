@@ -4,7 +4,7 @@ namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreUserRequest extends FormRequest
+class UpdateUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,21 +21,15 @@ class StoreUserRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->route('user')->id;
+
         return [
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:50|unique:users,username',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'username' => 'required|string|max:50|unique:users,username,' . $userId,
+            'email' => 'required|string|email|max:255|unique:users,email' . $userId,
+            'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|string|exists:roles,name',
             'rayon_id' => 'nullable|exists:rayons,id|required_if:role,petugas',
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'rayon_id.required_if' => 'Petugas lapangan wajib memiliki penempatan Unit Rayon.',
-            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ];
     }
 }

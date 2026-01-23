@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -76,25 +78,28 @@ class User extends Authenticatable
     protected static function booted()
     {
         static::creating(function ($user) {
-            if (empty($user->identity_number) && $user->rayon_id) {
-                $rayon = Rayon::find($user->rayon_id);
-                $kodeRayon = $rayon->kode_rayon;
+            DB::transaction(function () use ($user) {
+                if (empty($user->identity_number) && $user->rayon_id) {
+                    $rayon = Rayon::find($user->rayon_id);
+                    $kodeRayon = $rayon->kode_rayon;
 
-                $lastUser = User::where('rayon_id', $user->rayon_id)
-                    ->orderBy('identity_number', 'desc')
-                    ->first();
+                    $lastUser = User::where('rayon_id', $user->rayon_id)
+                        ->lockForUpdate()
+                        ->orderBy('id', 'desc')
+                        ->first();
 
-                if ($lastUser) {
-                    $lastSequence = (int) substr($lastUser->identity_number, -3);
-                    $newSequence = $lastSequence + 1;
-                } else {
-                    $newSequence = 1;
+                    if ($lastUser && preg_match('/' . $kodeRayon . '(\d+)/', $lastUser->identity_number, $matches)) {
+                        $lastSequence = (int) $matches[1];
+                        $newSequence = $lastSequence + 1;
+                    } else {
+                        $newSequence = 1;
+                    }
+
+                    $user->identity_number = $kodeRayon . str_pad($newSequence, 3, '0', STR_PAD_LEFT);
+                } elseif (empty($user->identity_number) && is_null($user->rayon_id)) {
+                    $user->identity_number = 'ADM-' . strtoupper(Str::random(3));
                 }
-
-                $user->identity_number = $kodeRayon . str_pad($newSequence, 3, '0', STR_PAD_LEFT);
-            } elseif (empty($user->identity_number) && is_null($user->rayon_id)) {
-                $user->identity_number = 'GENERIC' . rand(100, 999);
-            }
+            });
         });
     }
 }

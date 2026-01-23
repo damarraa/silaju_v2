@@ -85,7 +85,10 @@ class MenuHelper
                             'subItems' => [
                                 ['name' => 'Laporan PJU dan IDPEL', 'path' => '/pju/meterisasi'],
                                 ['name' => 'Laporan Visual PJU', 'path' => '/pju/visual'],
+                                ['name' => 'Laporan Jenis Lampu', 'path' => '/pju/rekap-jenis'],
                                 ['name' => 'Laporan Realisasi', 'path' => '/pju/realisasi'],
+                                ['name' => 'Laporan Harian', 'path' => '/pju/rekap-harian'],
+                                ['name' => 'Laporan Keseluruhan', 'path' => '/pju/rekap-total'],
                                 ['name' => 'Hasil Data Petugas', 'path' => '/pju/officers'],
                             ]
                         ],
@@ -99,8 +102,8 @@ class MenuHelper
                             'icon' => 'users',
                             'path' => '#',
                             'subItems' => [
-                                ['name' => 'Daftar Pengguna', 'path' => '/admin/users'],
-                                ['name' => 'Roles & Permission', 'path' => '/admin/roles'],
+                                ['name' => 'Daftar Pengguna', 'path' => '/users'],
+                                ['name' => 'Roles & Permission', 'path' => '#'],
                             ]
                         ],
                     ],
