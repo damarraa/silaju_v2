@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Authentication\PasswordResetController;
 use App\Http\Controllers\PJU\PJUController;
@@ -30,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
     // User Management
     Route::resource('users', UserController::class);
+    Route::resource('roles', RoleController::class);
     // Helper
     Route::get('/ajax/rayons/{areaId}', [WilayahController::class, 'getRayonsByArea'])->name('ajax.rayons');
 

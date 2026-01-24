@@ -14,130 +14,162 @@ class MenuHelper
             return [];
         }
 
-        if ($user->hasRole('super_admin')) {
-            return [
-                [
-                    'title' => 'MAIN MENU',
-                    'items' => [
-                        [
-                            'name' => 'Dashboard',
-                            'icon' => 'dashboard',
-                            'path' => '/admin/dashboard',
-                        ],
-                    ],
-                ],
-                [
-                    'title' => 'ENTRY DATA',
-                    'items' => [
-                        [
-                            'name' => 'Entry PJU',
-                            'icon' => 'plus',
-                            'path' => '/pju/create',
-                        ],
-                        [
-                            'name' => 'Entry Trafo',
-                            'icon' => 'plus',
-                            'path' => '/trafo/create',
-                        ],
-                    ],
-                ],
-                [
-                    'title' => 'MASTER DATA',
-                    'items' => [
-                        [
-                            'name' => 'Data Table',
-                            'icon' => 'list',
-                            'path' => '#',
-                            'subItems' => [
-                                ['name' => 'Data LPJU', 'path' => '/pju'],
-                                ['name' => 'Data Trafo', 'path' => '/trafo'],
-                                ['name' => 'Verifikasi', 'path' => '/pju/verification'],
-                            ]
-                        ],
-                        [
-                            'name' => 'Data Photo',
-                            'icon' => 'image',
-                            'path' => '#',
-                            'subItems' => [
-                                ['name' => 'Photo LPJU', 'path' => '/pju/gallery'],
-                                ['name' => 'Photo Trafo', 'path' => '/trafo/gallery'],
-                            ]
-                        ],
-                        [
-                            'name' => 'Data Maps',
-                            'icon' => 'map',
-                            'path' => '#',
-                            'subItems' => [
-                                ['name' => 'Peta Keseluruhan', 'path' => '/admin/wilayah', 'pro' => false],
-                                ['name' => 'Peta Kec/Kelurahan', 'path' => '/admin/area', 'pro' => false],
-                                ['name' => 'Peta IDPEL', 'path' => '/admin/rayon', 'new' => true],
-                            ]
-                        ],
-                    ],
-                ],
-                [
-                    'title' => 'REPORT',
-                    'items' => [
-                        [
-                            'name' => 'Laporan',
-                            'icon' => 'clipboard',
-                            'path' => '#',
-                            'subItems' => [
-                                ['name' => 'Laporan PJU dan IDPEL', 'path' => '/pju/meterisasi'],
-                                ['name' => 'Laporan Visual PJU', 'path' => '/pju/visual'],
-                                ['name' => 'Laporan Jenis Lampu', 'path' => '/pju/rekap-jenis'],
-                                ['name' => 'Laporan Realisasi', 'path' => '/pju/realisasi'],
-                                ['name' => 'Laporan Harian', 'path' => '/pju/rekap-harian'],
-                                ['name' => 'Laporan Keseluruhan', 'path' => '/pju/rekap-total'],
-                                ['name' => 'Hasil Data Petugas', 'path' => '/pju/officers'],
-                            ]
-                        ],
-                    ],
-                ],
-                [
-                    'title' => 'ADMINISTRATOR',
-                    'items' => [
-                        [
-                            'name' => 'User Management',
-                            'icon' => 'users',
-                            'path' => '#',
-                            'subItems' => [
-                                ['name' => 'Daftar Pengguna', 'path' => '/users'],
-                                ['name' => 'Roles & Permission', 'path' => '#'],
-                            ]
-                        ],
-                    ],
-                ]
-            ];
-        }
-
-        return [
+        $menuStructure = [
             [
-                'title' => 'MENU UTAMA',
+                'title' => 'MAIN MENU',
                 'items' => [
                     [
                         'name' => 'Dashboard',
                         'icon' => 'dashboard',
-                        'path' => '/dashboard',
-                    ],
-                    [
-                        'name' => 'Entry PJU',
-                        'icon' => 'list',
-                        'path' => '/pju',
+                        'path' => '/admin/dashboard',
+                        'permission' => 'dashboard'
                     ],
                 ],
             ],
             [
-                'title' => 'PENGATURAN',
+                'title' => 'ENTRY DATA',
                 'items' => [
                     [
-                        'name' => 'Profil Saya',
-                        'icon' => 'user-profile',
-                        'path' => '/profile',
+                        'name' => 'Entry PJU',
+                        'icon' => 'plus',
+                        'path' => '/pju/create',
+                        'permission' => 'pju_create'
                     ],
-                ]
+                    [
+                        'name' => 'Entry Trafo',
+                        'icon' => 'plus',
+                        'path' => '/trafo/create',
+                        'permission' => 'trafo_create'
+                    ],
+                ],
+            ],
+            [
+                'title' => 'MASTER DATA',
+                'items' => [
+                    [
+                        'name' => 'Data Table',
+                        'icon' => 'list',
+                        'path' => '#',
+                        'subItems' => [
+                            ['name' => 'Data LPJU', 'path' => '/pju', 'permission' => 'pju_view'],
+                            ['name' => 'Data Trafo', 'path' => '/trafo', 'permission' => 'trafo_view'],
+                            ['name' => 'Verifikasi', 'path' => '/pju/verification', 'permission' => 'verifikator_edit'],
+                        ]
+                    ],
+                    [
+                        'name' => 'Data Photo',
+                        'icon' => 'image',
+                        'path' => '#',
+                        'subItems' => [
+                            ['name' => 'Photo LPJU', 'path' => '/pju/gallery', 'permission' => 'pju_gallery'],
+                            ['name' => 'Photo Trafo', 'path' => '/trafo/gallery', 'permission' => 'trafo_gallery'],
+                        ]
+                    ],
+                    [
+                        'name' => 'Data Maps',
+                        'icon' => 'map',
+                        'path' => '#',
+                        'permission' => 'maps_view',
+                        'subItems' => [
+                            ['name' => 'Peta Keseluruhan', 'path' => '/admin/wilayah'],
+                            ['name' => 'Peta Kec/Kelurahan', 'path' => '/admin/area'],
+                            ['name' => 'Peta IDPEL', 'path' => '/admin/rayon'],
+                        ]
+                    ],
+                ],
+            ],
+            [
+                'title' => 'REPORT',
+                'items' => [
+                    [
+                        'name' => 'Laporan',
+                        'icon' => 'clipboard',
+                        'path' => '#',
+                        'permission' => 'report_view',
+                        'subItems' => [
+                            ['name' => 'Laporan PJU dan IDPEL', 'path' => '/pju/meterisasi'],
+                            ['name' => 'Laporan Visual PJU', 'path' => '/pju/visual'],
+                            ['name' => 'Laporan Jenis Lampu', 'path' => '/pju/rekap-jenis'],
+                            ['name' => 'Laporan Realisasi', 'path' => '/pju/realisasi'],
+                            ['name' => 'Laporan Harian', 'path' => '/pju/rekap-harian'],
+                            ['name' => 'Laporan Keseluruhan', 'path' => '/pju/rekap-total'],
+                            ['name' => 'Hasil Data Petugas', 'path' => '/pju/officers'],
+                        ]
+                    ],
+                ],
+            ],
+            [
+                'title' => 'ADMINISTRATOR',
+                'items' => [
+                    [
+                        'name' => 'User Management',
+                        'icon' => 'users',
+                        'path' => '#',
+                        'permission' => 'user_view',
+                        'subItems' => [
+                            ['name' => 'Daftar Pengguna', 'path' => '/users', 'permission' => 'user_view'],
+                            ['name' => 'Roles & Permission', 'path' => '/roles', 'permission' => 'user_edit'],
+                        ]
+                    ],
+                ],
             ]
         ];
+
+        $filteredMenu = [];
+
+        foreach ($menuStructure as $group) {
+            $filteredItems = [];
+
+            foreach ($group['items'] as $item) {
+                // Cek permission item utama
+                if (isset($item['permission']) && !$user->can($item['permission'])) {
+                    continue;
+                }
+
+                // Cek subItems (jika ada)
+                if (isset($item['subItems'])) {
+                    $filteredSubItems = [];
+                    foreach ($item['subItems'] as $subItem) {
+                        // Jika subItem punya permission spesifik, cek juga
+                        // Jika tidak punya, ikut permission induk (yang sudah lolos di atas)
+                        if (isset($subItem['permission']) && !$user->can($subItem['permission'])) {
+                            continue;
+                        }
+                        $filteredSubItems[] = $subItem;
+                    }
+
+                    // Jika setelah difilter subItems kosong, dan item ini hanya container (path '#'),
+                    // maka item ini tidak perlu ditampilkan.
+                    if (empty($filteredSubItems) && $item['path'] === '#') {
+                        continue;
+                    }
+
+                    $item['subItems'] = $filteredSubItems;
+                }
+
+                $filteredItems[] = $item;
+            }
+
+            // Hanya tambahkan Group jika memiliki minimal 1 item
+            if (!empty($filteredItems)) {
+                $group['items'] = $filteredItems;
+                $filteredMenu[] = $group;
+            }
+        }
+
+        // Tambahkan Menu Pengaturan (Profile) untuk semua user di paling bawah
+        $filteredMenu[] = [
+            'title' => 'PENGATURAN',
+            'items' => [
+                [
+                    'name' => 'Profil Saya',
+                    'icon' => 'user-profile',
+                    'path' => '/profile',
+                ],
+            ]
+        ];
+
+        return $filteredMenu;
     }
 
     public static function isActive($path)
@@ -153,6 +185,9 @@ class MenuHelper
             'map' => '<svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C7.58172 2 4 5.58172 4 10C4 14.4183 12 22 12 22C12 22 20 14.4183 20 10C20 5.58172 16.4183 2 12 2ZM12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" fill=""/></svg>',
             'users' => '<svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 8C16 10.21 14.21 12 12 12C9.79 12 8 10.21 8 8C8 5.79 9.79 4 12 4C14.21 4 16 5.79 16 8ZM4 18C4 15.34 9.33 14 12 14C14.67 14 20 15.34 20 18V20H4V18Z" fill=""/></svg>',
             'list' => '<svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20V8H4V6ZM4 11H20V13H4V11ZM4 16H20V18H4V16Z" fill=""/></svg>',
+            'plus' => '<svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'clipboard' => '<svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 2h6a2 2 0 012 2v2H7V4a2 2 0 012-2zM5 6h14v16a2 2 0 01-2 2H7a2 2 0 01-2-2V6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'image' => '<svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         ];
 
         return $icons[$iconName] ?? '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>';

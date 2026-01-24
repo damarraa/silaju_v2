@@ -19,11 +19,11 @@ class MasterDataSeeder extends Seeder
     public function run(): void
     {
         // Setup roles.
-        $roleSuperAdmin = Role::create(['name' => 'super_admin']);
-        $roleAdminUP3 = Role::create(['name' => 'admin_up3']);
-        $roleAdminULP = Role::create(['name' => 'admin_ulp']);
-        $roleVerifikator = Role::create(['name' => 'verifikator']);
-        $roleLapangan = Role::create(['name' => 'petugas']);
+        // $roleSuperAdmin = Role::create(['name' => 'super_admin']);
+        // $roleAdminUP3 = Role::create(['name' => 'admin_up3']);
+        // $roleAdminULP = Role::create(['name' => 'admin_ulp']);
+        // $roleVerifikator = Role::create(['name' => 'verifikator']);
+        // $roleLapangan = Role::create(['name' => 'petugas']);
 
         // Data wilayah.
         $wilayah = Wilayah::create([
