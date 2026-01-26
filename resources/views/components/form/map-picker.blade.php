@@ -4,6 +4,15 @@
     {{-- Container Map --}}
     <div id="map" class="h-[300px] w-full z-0 rounded-md"></div>
 
+    {{-- Dropdown Map Type (New Feature) --}}
+    <select id="map-type-selector"
+        class="absolute top-3 right-3 z-10 rounded-md bg-white border border-gray-200 py-1.5 pl-3 pr-8 text-xs font-bold text-gray-700 shadow-lg focus:border-brand-500 focus:ring-brand-500 dark:bg-gray-800 dark:text-white dark:border-gray-600 cursor-pointer">
+        <option value="roadmap">Roadmap</option>
+        <option value="satellite">Satelit</option>
+        <option value="hybrid">Hybrid</option>
+        <option value="terrain">Terrain</option>
+    </select>
+
     {{-- Tombol Lokasi Saya (Floating) --}}
     <button type="button" id="btn-get-loc"
         class="absolute bottom-4 right-14 z-10 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-bold text-gray-700 shadow-lg border border-gray-200 hover:bg-gray-50 active:scale-95 transition dark:bg-gray-800 dark:text-white dark:border-gray-600">
@@ -49,6 +58,7 @@
         const latInput = document.getElementById('latitude_input');
         const lngInput = document.getElementById('longitude_input');
         const btnLoc = document.getElementById('btn-get-loc');
+        const mapTypeSelector = document.getElementById('map-type-selector'); // Element Select
 
         function initMap() {
             // 1. Inisialisasi Map
@@ -57,9 +67,9 @@
             map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 15,
                 center: myLatLng,
-                mapTypeId: 'roadmap', // roadmap, satellite, hybrid, terrain
+                mapTypeId: 'roadmap', // Default awal
                 streetViewControl: false,
-                mapTypeControl: false,
+                mapTypeControl: false, // Matikan kontrol bawaan agar tidak bentrok
                 fullscreenControl: true,
                 zoomControl: true,
             });
@@ -99,9 +109,12 @@
                 getLocation();
             });
 
-            // D. Auto Detect saat Load (Jika PM minta langsung aktif)
-            // Cek jika lat/lng masih default (misal 0 atau bawaan Pekanbaru), coba cari lokasi user
-            // Atau bisa langsung dipanggil jika ingin selalu detect saat buka menu
+            // D. Dropdown Map Type Change (New Feature)
+            mapTypeSelector.addEventListener('change', function () {
+                map.setMapTypeId(this.value);
+            });
+
+            // E. Auto Detect saat Load
             getLocation();
         }
 

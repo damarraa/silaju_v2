@@ -56,7 +56,19 @@
     {{-- MAP CONTAINER --}}
     <div
         class="relative w-full h-[700px] rounded-lg border border-gray-200 shadow-default overflow-hidden dark:border-gray-800">
+
         <div id="map" class="w-full h-full z-0"></div>
+
+        {{-- [NEW] Map Type Selector (Floating Top Right) --}}
+        <div class="absolute top-4 right-16 z-10">
+            <select id="map-type-selector"
+                class="rounded-md bg-white border border-gray-200 py-2 pl-3 pr-8 text-xs font-bold text-gray-700 shadow-lg focus:border-brand-500 focus:ring-brand-500 dark:bg-gray-800 dark:text-white dark:border-gray-600 cursor-pointer transition hover:bg-gray-50">
+                <option value="roadmap">Roadmap</option>
+                <option value="satellite">Satelit</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="terrain">Terrain</option>
+            </select>
+        </div>
 
         {{-- Custom Legend --}}
         <div
@@ -99,22 +111,18 @@
         // Data dari Controller
         const pjuData = @json($pjuMarkers);
         const trafoData = @json($trafoMarkers);
+        const mapTypeSelector = document.getElementById('map-type-selector'); // Selector Element
 
         /**
          * FUNGSI HITUNG OFFSET (Jittering)
-         * Menggeser koordinat marker agar membentuk lingkaran di sekitar trafo
          */
         function calculateOffset(lat, lng, index, total) {
-            if (total <= 1) return { lat, lng }; // Jika cuma 1 anak, biarkan di tengah
+            if (total <= 1) return { lat, lng };
 
-            // Jarak radius geser (makin besar makin jauh dari trafo)
             const radius = 0.00015;
-
-            // Bagi lingkaran (360 derajat) sesuai jumlah item
             const angle = (360 / total) * index;
             const radians = angle * (Math.PI / 180);
 
-            // Rumus Trigonometri untuk geser Lat/Lng
             const newLat = lat + (radius * Math.cos(radians));
             const newLng = lng + (radius * Math.sin(radians));
 
@@ -128,20 +136,25 @@
                 : { lat: 0.5071, lng: 101.4478 };
 
             map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 18, // Zoom level tinggi agar offset terlihat jelas
+                zoom: 18,
                 center: centerLoc,
-                mapTypeId: 'roadmap',
+                mapTypeId: 'roadmap', // Default awal
                 streetViewControl: false,
-                mapTypeControl: false,
+                mapTypeControl: false, // Kita pakai custom control sendiri
                 fullscreenControl: true
             });
 
             const infoWindow = new google.maps.InfoWindow();
 
+            // [NEW] Event Listener untuk Ganti Tipe Peta
+            mapTypeSelector.addEventListener('change', function () {
+                map.setMapTypeId(this.value);
+            });
+
             // 2. RENDER MARKER TRAFO (GARDU)
             trafoData.forEach(trafo => {
                 const trafoIcon = {
-                    url: "https://maps.google.com/mapfiles/kml/pal3/icon28.png", // Icon Listrik Standar Google
+                    url: "https://maps.google.com/mapfiles/kml/pal3/icon28.png",
                     scaledSize: new google.maps.Size(40, 40),
                     origin: new google.maps.Point(0, 0),
                     anchor: new google.maps.Point(20, 20)
@@ -152,99 +165,89 @@
                     map: map,
                     icon: trafoIcon,
                     title: `Gardu: ${trafo.kode}`,
-                    zIndex: 1 // Layer Paling Bawah
+                    zIndex: 1
                 });
 
-                // InfoWindow Trafo
                 marker.addListener("click", () => {
                     infoWindow.setContent(`
-                            <div style="padding:5px; text-align:center; min-width:100px;">
-                                <h3 style="font-weight:bold; color:#1a73e8; margin-bottom:5px;">⚡ GARDU</h3>
-                                <div style="font-size:14px;"><strong>${trafo.kode}</strong></div>
-                            </div>
-                        `);
+                                    <div style="padding:5px; text-align:center; min-width:100px;">
+                                        <h3 style="font-weight:bold; color:#1a73e8; margin-bottom:5px;">⚡ GARDU</h3>
+                                        <div style="font-size:14px;"><strong>${trafo.kode}</strong></div>
+                                    </div>
+                                `);
                     infoWindow.open(map, marker);
                 });
             });
 
             // 3. RENDER MARKER PJU (ANAK)
             pjuData.forEach(pju => {
-
-                // A. Hitung Posisi Baru (Offset)
-                // Menggunakan index sibling agar tersebar merata
                 const offsetPos = calculateOffset(pju.lat, pju.lng, pju.sibling_index, pju.total_siblings);
 
-                // B. Tentukan Warna Pin
-                let fillColor = "#10B981"; // Hijau (Baik)
-                if (pju.kondisi === 'rusak') fillColor = "#EF4444"; // Merah (Rusak)
-                else if (pju.status === 'ilegal') fillColor = "#F59E0B"; // Orange (Ilegal)
+                let fillColor = "#10B981"; // Hijau
+                if (pju.kondisi === 'rusak') fillColor = "#EF4444"; // Merah
+                else if (pju.status === 'ilegal') fillColor = "#F59E0B"; // Orange
 
-                // C. SVG Custom Marker (Pin Bulat)
                 const pinSVG = {
-                    // Path bentuk Pin Google Maps Klasik tapi lebih bulat
                     path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z",
                     fillColor: fillColor,
                     fillOpacity: 1,
                     strokeWeight: 1.5,
-                    strokeColor: "#FFFFFF", // Border putih
+                    strokeColor: "#FFFFFF",
                     scale: 2,
-                    anchor: new google.maps.Point(12, 22), // Titik tancap di bawah
-                    labelOrigin: new google.maps.Point(12, 9) // Posisi angka di tengah kepala
+                    anchor: new google.maps.Point(12, 22),
+                    labelOrigin: new google.maps.Point(12, 9)
                 };
 
                 const marker = new google.maps.Marker({
-                    position: offsetPos, // Gunakan koordinat hasil geser
+                    position: offsetPos,
                     map: map,
                     icon: pinSVG,
                     title: `IDPEL: ${pju.title}`,
                     label: {
-                        text: pju.nomor, // Angka urut (1, 2, 3...)
+                        text: pju.nomor,
                         color: "white",
                         fontSize: "11px",
                         fontWeight: "bold"
                     },
-                    zIndex: 999 // Layer Paling Atas
+                    zIndex: 999
                 });
 
-                // D. Gambar Garis Penghubung (Dashed Line) ke Trafo
+                // Garis Penghubung
                 const connectionLine = new google.maps.Polyline({
                     path: [
-                        { lat: pju.lat, lng: pju.lng }, // Titik Asli (Trafo)
-                        offsetPos // Titik Geser (PJU)
+                        { lat: pju.lat, lng: pju.lng },
+                        offsetPos
                     ],
                     geodesic: true,
-                    strokeColor: "#6B7280", // Abu-abu
-                    strokeOpacity: 0,       // Transparan (karena pakai icons)
+                    strokeColor: "#6B7280",
+                    strokeOpacity: 0,
                     strokeWeight: 1.5,
                     icons: [{
-                        icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2 }, // Pola garis putus
+                        icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2 },
                         offset: '0',
                         repeat: '10px'
                     }],
                     map: map,
-                    zIndex: 2 // Di atas trafo, di bawah pin PJU
+                    zIndex: 2
                 });
 
-                // E. InfoWindow PJU
                 marker.addListener("click", () => {
-                    const statusColor = pju.kondisi === 'rusak' ? '#EF4444' : '#10B981';
-
                     const contentString = `
-                            <div style="min-width:180px; padding:5px; font-family: sans-serif;">
-                                <div style="border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                                    <strong style="font-size:14px;">💡 PJU No. ${pju.nomor}</strong>
-                                    <span style="font-size:10px; background:${fillColor}; color:white; padding:2px 6px; border-radius:10px;">${pju.kondisi.toUpperCase()}</span>
-                                </div>
-                                <div style="font-size:12px; line-height:1.6; color:#444;">
-                                    <div><strong>IDPEL:</strong> ${pju.title}</div>
-                                    <div><strong>Gardu:</strong> ${pju.trafo_kode}</div>
-                                    <div><strong>Rayon:</strong> ${pju.rayon}</div>
-                                </div>
-                                <div style="margin-top:10px; text-align:right;">
-                                    <a href="/pju/${pju.id}/edit" target="_blank" style="background:#3B82F6; color:white; padding:5px 10px; text-decoration:none; border-radius:4px; font-size:11px; font-weight:bold;">Lihat Detail</a>
-                                </div>
-                            </div>
-                        `;
+                                    <div style="min-width:180px; padding:5px; font-family: sans-serif;">
+                                        <div style="border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                                            <strong style="font-size:14px;">💡 PJU No. ${pju.nomor}</strong>
+                                            <span style="font-size:10px; background:${fillColor}; color:white; padding:2px 6px; border-radius:10px;">${pju.kondisi.toUpperCase()}</span>
+                                        </div>
+                                        <div style="font-size:12px; line-height:1.6; color:#444;">
+                                            <div><strong>IDPEL:</strong> ${pju.title}</div>
+                                            <div><strong>Gardu:</strong> ${pju.trafo_kode}</div>
+                                            <div><strong>Rayon:</strong> ${pju.rayon}</div>
+                                        </div>
+                                        <div style="margin-top:10px; text-align:right;">
+                                            <a href="/pju/${pju.id}/edit" target="_blank" style="background:#3B82F6; color:white; padding:5px 10px; text-decoration:none; border-radius:4px; font-size:11px; font-weight:bold;">Lihat Detail</a>
+                                        </div>
+                                    </div>
+                                `;
                     infoWindow.setContent(contentString);
                     infoWindow.open(map, marker);
                 });

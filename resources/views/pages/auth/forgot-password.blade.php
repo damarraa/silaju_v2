@@ -72,18 +72,20 @@
 
             <div class="bg-brand-950 relative hidden h-full w-full items-center lg:grid lg:w-1/2 dark:bg-white/5">
                 <div class="z-1 flex items-center justify-center">
-                    <!-- ===== Common Grid Shape Start ===== -->
                     <x-common.common-grid-shape />
                     <div class="flex max-w-xs flex-col items-center">
                         <a href="/" class="mb-4 block">
-                            <img src="./images/logo/auth-logo.svg" alt="Logo" />
+                            {{-- [UPDATE] Logo Banner --}}
+                            {{-- Karena BG di sini selalu gelap (Brand Color), Logo putih tampil sempurna tanpa filter --}}
+                            <img src="{{ asset('logo.png') }}" alt="Logo" class="w-64 object-contain" />
                         </a>
                         <p class="text-center text-gray-400 dark:text-white/60">
-                            Sistem Manajemen Internal PLN <br> Pemulihan Akun.
+                            Sistem Pendataan Lampu Jalan
                         </p>
                     </div>
                 </div>
             </div>
+            
             <!-- Toggler -->
             <div class="fixed right-6 bottom-6 z-50">
                 <button
