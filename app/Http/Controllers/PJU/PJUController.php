@@ -12,10 +12,13 @@ use App\Models\PJU;
 use App\Models\Rayon;
 use App\Models\Trafo;
 use App\Models\User;
+use App\Notifications\DataStatusUpdated;
+use App\Notifications\NewDataSubmission;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
@@ -71,7 +74,12 @@ class PJUController extends Controller
             );
         }
 
-        PJU::create($data);
+        $pju = PJU::create($data);
+        $verifikators = User::role('verifikator')->get();
+
+        if ($verifikators->count() > 0) {
+            Notification::send($verifikators, new NewDataSubmission($pju, auth()->user()->name));
+        }
         return redirect()->route('pju.create')->with('success', 'Data LPJU berhasil disimpan! Silakan input data berikutnya.');
     }
 
@@ -196,6 +204,10 @@ class PJUController extends Controller
             'verified_at' => now(),
             'verified_by' => auth()->id(),
         ]);
+
+        if ($pju->user) {
+            $pju->user->notify(new DataStatusUpdated($pju, $status, auth()->user()->name));
+        }
 
         $message = $status === 'verified' ? 'Data berhasil Diverifikasi.' : 'Data berhasil Ditolak.';
         return back()->with('success', $message);

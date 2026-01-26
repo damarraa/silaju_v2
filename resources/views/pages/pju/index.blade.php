@@ -123,6 +123,7 @@
             <table class="w-full table-auto">
                 <thead class="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-900">
                     <tr>
+                        <th class="px-4 py-3 w-10 font-medium text-gray-500 text-xs uppercase dark:text-gray-400 text-center">No</th>
                         <th class="px-4 py-3 font-medium text-gray-500 text-xs uppercase dark:text-gray-400">Bukti</th>
                         <th class="px-4 py-3 font-medium text-gray-500 text-xs uppercase dark:text-gray-400">ID / Lokasi</th>
                         <th class="px-4 py-3 font-medium text-gray-500 text-xs uppercase dark:text-gray-400">Spesifikasi</th>
@@ -134,6 +135,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
                     @forelse($pjus as $pju)
                     <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition">
+                        <td class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                            {{ ($pjus->currentPage() - 1) * $pjus->perPage() + $loop->iteration }}
+                        </td>
                         
                         <td class="px-4 py-3">
                             <div class="h-12 w-12 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 relative group cursor-pointer" onclick="window.open('{{ asset('storage/' . $pju->evidence) }}', '_blank')">

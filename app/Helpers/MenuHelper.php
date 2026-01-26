@@ -71,9 +71,9 @@ class MenuHelper
                         'path' => '#',
                         'permission' => 'maps_view',
                         'subItems' => [
-                            ['name' => 'Peta Keseluruhan', 'path' => '/admin/wilayah'],
-                            ['name' => 'Peta Kec/Kelurahan', 'path' => '/admin/area'],
-                            ['name' => 'Peta IDPEL', 'path' => '/admin/rayon'],
+                            ['name' => 'Peta Keseluruhan', 'path' => '/maps/sebaran'],
+                            ['name' => 'Peta Kec/Kelurahan', 'path' => '/maps/area'],
+                            ['name' => 'Peta IDPEL', 'path' => '/maps/idpel'],
                         ]
                     ],
                 ],
@@ -158,16 +158,16 @@ class MenuHelper
         }
 
         // Tambahkan Menu Pengaturan (Profile) untuk semua user di paling bawah
-        $filteredMenu[] = [
-            'title' => 'PENGATURAN',
-            'items' => [
-                [
-                    'name' => 'Profil Saya',
-                    'icon' => 'user-profile',
-                    'path' => '/profile',
-                ],
-            ]
-        ];
+        // $filteredMenu[] = [
+        //     'title' => 'PENGATURAN',
+        //     'items' => [
+        //         [
+        //             'name' => 'Profil Saya',
+        //             'icon' => 'user-profile',
+        //             'path' => '/profile',
+        //         ],
+        //     ]
+        // ];
 
         return $filteredMenu;
     }

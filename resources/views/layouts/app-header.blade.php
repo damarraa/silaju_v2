@@ -61,7 +61,7 @@
                 </svg>
             </button>
 
-            <div class="hidden xl:block">
+            {{-- <div class="hidden xl:block">
                 <form>
                     <div class="relative">
                         <span class="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
@@ -81,7 +81,7 @@
                         </button>
                     </div>
                 </form>
-            </div>
+            </div> --}}
         </div>
 
         <div :class="isApplicationMenuOpen ? 'flex' : 'hidden'"

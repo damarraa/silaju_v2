@@ -58,7 +58,8 @@
                         <option value="">Semua Area</option>
                         @foreach($areas as $area)
                             <option value="{{ $area->id }}" {{ request('area_id') == $area->id ? 'selected' : '' }}>
-                                {{ $area->nama }}</option>
+                                {{ $area->nama }}
+                            </option>
                         @endforeach
                     </select>
 
@@ -74,6 +75,9 @@
             <table class="w-full table-auto">
                 <thead class="border-b border-gray-200 bg-gray-50 text-left dark:border-gray-800 dark:bg-gray-900">
                     <tr>
+                        <th
+                            class="px-4 py-3 w-10 font-medium text-gray-500 text-xs uppercase dark:text-gray-400 text-center">
+                            No</th>
                         <th class="px-4 py-3 font-medium text-gray-500 text-xs uppercase dark:text-gray-400">Foto</th>
                         <th class="px-4 py-3 font-medium text-gray-500 text-xs uppercase dark:text-gray-400">ID Gardu /
                             Lokasi</th>
@@ -90,6 +94,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
                     @forelse($trafos as $trafo)
                         <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition">
+                            <td class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                                {{ ($trafos->currentPage() - 1) * $trafos->perPage() + $loop->iteration }}
+                            </td>
 
                             <td class="px-4 py-3">
                                 <div class="h-12 w-12 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 relative group cursor-pointer"

@@ -9,15 +9,18 @@
 
     <div class="rounded-lg border border-gray-200 bg-white shadow-default dark:border-gray-800 dark:bg-gray-900">
 
-        <form action="{{ route('trafo.store') }}" method="POST" enctype="multipart/form-data" class="p-4 md:p-6.5" x-data="{ 
-                    previewImage: null,
-                    handleFileChange(event) {
-                        const file = event.target.files[0];
-                        if (file) {
-                            this.previewImage = URL.createObjectURL(file);
-                        }
+        <form action="{{ route('trafo.store') }}" method="POST" enctype="multipart/form-data" class="p-4 md:p-6.5" 
+            x-data="{ 
+                lat: '{{ old('latitude', -0.5071) }}', 
+                lng: '{{ old('longitude', 101.4478) }}',
+                previewImage: null,
+                handleFileChange(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.previewImage = URL.createObjectURL(file);
                     }
-                }">
+                }
+            }">
             @csrf
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -63,7 +66,7 @@
                         </label>
 
                         <div class="mb-4">
-                            <x-form.map-picker :lat="old('latitude', -0.5071)" :lng="old('longitude', 101.4478)" />
+                            <x-form.map-picker ::lat="lat" ::lng="lng" />
                         </div>
 
                         <div

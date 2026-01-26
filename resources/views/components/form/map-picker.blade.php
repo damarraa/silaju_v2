@@ -1,147 +1,165 @@
 @props(['lat' => -0.5071, 'lng' => 101.4478])
 
 <div class="relative overflow-hidden rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 p-1">
-    <div id="map" class="h-[250px] w-full z-0 rounded-md"></div>
+    {{-- Container Map --}}
+    <div id="map" class="h-[300px] w-full z-0 rounded-md"></div>
 
+    {{-- Tombol Lokasi Saya (Floating) --}}
     <button type="button" id="btn-get-loc"
-        class="absolute bottom-3 right-3 z-[400] flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 shadow-md border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-600 transition">
+        class="absolute bottom-4 right-14 z-10 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-bold text-gray-700 shadow-lg border border-gray-200 hover:bg-gray-50 active:scale-95 transition dark:bg-gray-800 dark:text-white dark:border-gray-600">
         <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z">
             </path>
         </svg>
-        Lokasi Saya
+        <span>Lokasi Saya</span>
     </button>
 </div>
 
+{{-- Input Koordinat (Dual Sync) --}}
 <div class="grid grid-cols-2 gap-4 mt-3">
     <div>
-        <label class="block text-[10px] uppercase font-bold text-gray-500 mb-1">Latitude <span class="text-error-500">*</span></label>
+        <label class="block text-[10px] uppercase font-bold text-gray-500 mb-1">Latitude <span
+                class="text-error-500">*</span></label>
         <input type="text" id="latitude_input" name="latitude" x-model="lat" placeholder="-0.xxxxxx"
-            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-800 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-800 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white transition" />
     </div>
     <div>
-        <label class="block text-[10px] uppercase font-bold text-gray-500 mb-1">Longitude <span class="text-error-500">*</span></label>
+        <label class="block text-[10px] uppercase font-bold text-gray-500 mb-1">Longitude <span
+                class="text-error-500">*</span></label>
         <input type="text" id="longitude_input" name="longitude" x-model="lng" placeholder="101.xxxxxx"
-            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-800 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-800 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white transition" />
     </div>
 </div>
-<p class="text-[10px] text-gray-400 mt-1 italic">*Geser pin di peta atau ketik koordinat manual.</p>
+<p class="text-[10px] text-gray-400 mt-1 italic">*Geser pin merah di peta atau ketik koordinat manual.</p>
 
-{{-- ASSETS & SCRIPTS --}}
-@once
-    @push('styles')
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-        <style>
-            .leaflet-pane {
-                z-index: 0 !important;
-            }
-
-            /* Fix z-index dropdown conflict */
-        </style>
-    @endpush
-
-    @push('scripts')
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    @endpush
-@endonce
-
+{{-- SCRIPT GOOGLE MAPS --}}
 @push('scripts')
+    {{-- Pastikan API KEY sudah ada di .env --}}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&callback=initMap" async
+        defer></script>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // --- CONFIG ---
-            // Ambil default value dari props blade atau fallback
-            const startLat = {{ $lat }};
-            const startLng = {{ $lng }};
+        let map, marker;
+        // Ambil default value dari Blade props
+        let currentLat = {{ $lat }};
+        let currentLng = {{ $lng }};
 
-            // --- INIT MAP ---
-            const map = L.map('map', { scrollWheelZoom: false }).setView([startLat, startLng], 13);
+        const latInput = document.getElementById('latitude_input');
+        const lngInput = document.getElementById('longitude_input');
+        const btnLoc = document.getElementById('btn-get-loc');
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
+        function initMap() {
+            // 1. Inisialisasi Map
+            const myLatLng = { lat: currentLat, lng: currentLng };
 
-            // Fix Marker Icon Missing
-            delete L.Icon.Default.prototype._getIconUrl;
-            L.Icon.Default.mergeOptions({
-                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: myLatLng,
+                mapTypeId: 'roadmap', // roadmap, satellite, hybrid, terrain
+                streetViewControl: false,
+                mapTypeControl: false,
+                fullscreenControl: true,
+                zoomControl: true,
             });
 
-            const marker = L.marker([startLat, startLng], { draggable: true, autoPan: true }).addTo(map);
-
-            // Fix Render Size di dalam Grid/Flex
-            setTimeout(() => { map.invalidateSize(); }, 300);
-
-            // --- ELEMENTS ---
-            const latInput = document.getElementById('latitude_input');
-            const lngInput = document.getElementById('longitude_input');
-            const btnLoc = document.getElementById('btn-get-loc');
-
-            // --- FUNCTIONS ---
-            function updateInputs(lat, lng) {
-                latInput.value = lat.toFixed(6);
-                lngInput.value = lng.toFixed(6);
-                // Dispatch event agar AlpineJS x-model mendeteksi perubahan
-                latInput.dispatchEvent(new Event('input'));
-                lngInput.dispatchEvent(new Event('input'));
-            }
-
-            function updateMap(lat, lng) {
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    const newPos = new L.LatLng(lat, lng);
-                    marker.setLatLng(newPos);
-                    map.panTo(newPos);
-                }
-            }
-
-            // --- LISTENERS (SYNC 2 ARAH) ---
-
-            // 1. Marker Drag -> Input
-            marker.on('dragend', function (e) {
-                const pos = marker.getLatLng();
-                updateInputs(pos.lat, pos.lng);
+            // 2. Inisialisasi Marker (Draggable)
+            marker = new google.maps.Marker({
+                position: myLatLng,
+                map: map,
+                draggable: true,
+                title: "Titik PJU",
+                animation: google.maps.Animation.DROP
             });
 
-            // 2. Input Manual -> Map
+            // --- EVENT LISTENERS ---
+
+            // A. Marker Drag End -> Update Input
+            marker.addListener("dragend", () => {
+                const position = marker.getPosition();
+                updateInputs(position.lat(), position.lng());
+            });
+
+            // B. Input Manual -> Update Marker & Map
             [latInput, lngInput].forEach(input => {
                 input.addEventListener('input', () => {
-                    updateMap(parseFloat(latInput.value), parseFloat(lngInput.value));
+                    const lat = parseFloat(latInput.value);
+                    const lng = parseFloat(lngInput.value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const newPos = { lat: lat, lng: lng };
+                        marker.setPosition(newPos);
+                        map.panTo(newPos);
+                    }
                 });
             });
 
-            // 3. Geolocation
-            btnLoc.addEventListener('click', function () {
-                if (!navigator.geolocation) {
-                    alert("Browser tidak mendukung GPS"); return;
-                }
+            // C. Tombol Lokasi Saya (Geolocation)
+            btnLoc.addEventListener('click', () => {
+                getLocation();
+            });
 
+            // D. Auto Detect saat Load (Jika PM minta langsung aktif)
+            // Cek jika lat/lng masih default (misal 0 atau bawaan Pekanbaru), coba cari lokasi user
+            // Atau bisa langsung dipanggil jika ingin selalu detect saat buka menu
+            getLocation();
+        }
+
+        // Fungsi Update Input & Dispatch Event untuk AlpineJS
+        function updateInputs(lat, lng) {
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+
+            // Penting: Dispatch event agar x-model di AlpineJS parent ter-update
+            latInput.dispatchEvent(new Event('input'));
+            lngInput.dispatchEvent(new Event('input'));
+        }
+
+        // Fungsi Geolocation Browser
+        function getLocation() {
+            if (navigator.geolocation) {
                 const originalText = btnLoc.innerHTML;
-                btnLoc.innerHTML = "Mencari...";
+                btnLoc.innerHTML = `<span class="animate-pulse">Mencari...</span>`;
                 btnLoc.disabled = true;
 
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
-                        updateMap(lat, lng);
-                        updateInputs(lat, lng);
-                        map.setView([lat, lng], 17);
-                        btnLoc.innerHTML = "Ditemukan!";
-                        setTimeout(() => { btnLoc.innerHTML = originalText; btnLoc.disabled = false; }, 2000);
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+
+                        // Update Map & Marker
+                        marker.setPosition(pos);
+                        map.setCenter(pos);
+                        map.setZoom(17); // Zoom in lebih dekat
+
+                        // Update Form Inputs
+                        updateInputs(pos.lat, pos.lng);
+
+                        btnLoc.innerHTML = `<span class="text-green-600">Ditemukan!</span>`;
+                        setTimeout(() => {
+                            btnLoc.innerHTML = originalText;
+                            btnLoc.disabled = false;
+                        }, 2000);
                     },
-                    (err) => {
-                        alert("Gagal mendapatkan lokasi: " + err.message);
+                    () => {
+                        handleLocationError(true);
                         btnLoc.innerHTML = originalText;
                         btnLoc.disabled = false;
                     },
-                    { enableHighAccuracy: true, timeout: 10000 }
+                    { enableHighAccuracy: true } // Mode GPS Akurat
                 );
-            });
-        });
+            } else {
+                // Browser doesn't support Geolocation
+                handleLocationError(false);
+            }
+        }
+
+        function handleLocationError(browserHasGeolocation) {
+            alert(browserHasGeolocation
+                ? "Error: Gagal mendapatkan lokasi (Cek izin GPS browser)."
+                : "Error: Browser Anda tidak mendukung Geolocation.");
+        }
     </script>
 @endpush

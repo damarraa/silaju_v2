@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\MapsController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Authentication\AuthController;
 use App\Http\Controllers\Authentication\PasswordResetController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PJU\PJUController;
+use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Trafo\TrafoController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Wilayah\WilayahController;
@@ -27,16 +30,38 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    // Notification
+    Route::post('notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+    // Dashboard User (Operational View)
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    // Dashboard Admin/Manajemen (Analytic View)
+    Route::middleware(['role:super_admin|admin_up3|admin_ulp|verifikator'])->prefix('admin')->group(function () {
+        Route::get('dashboard', [DashboardController::class, 'admin'])->name('dashboard.admin');
+    });
+
+    // Profile Setting
+    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+
     // Logout
     Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
+
     // User Management
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
-    // Helper
+
+    // Helper Ajax
     Route::get('/ajax/rayons/{areaId}', [WilayahController::class, 'getRayonsByArea'])->name('ajax.rayons');
 
-    // PJU
+    // Maps Visualization
+    Route::get('maps/sebaran', [MapsController::class, 'index'])->name('maps.index');
+    Route::get('maps/area', [MapsController::class, 'indexArea'])->name('maps.area');
+    Route::get('maps/idpel', [MapsController::class, 'indexIdpel'])->name('maps.idpel');
+
+    // Modul PJU
     Route::prefix('pju')->name('pju.')->group(function () {
+        // Report & Monitoring
         Route::get('gallery', [PJUController::class, 'gallery'])->name('gallery');
         Route::get('meterisasi', [PJUController::class, 'meterisasiIndex'])->name('meterisasi');
         Route::get('visual', [PJUController::class, 'visualIndex'])->name('visual');
@@ -44,33 +69,28 @@ Route::middleware('auth')->group(function () {
         Route::get('rekap-jenis', [PJUController::class, 'rekapJenisIndex'])->name('rekap.jenis');
         Route::get('rekap-harian', [PJUController::class, 'dailyRecapIndex'])->name('rekap.harian');
         Route::get('rekap-total', [PJUController::class, 'rekapTotalIndex'])->name('rekap.total');
+
+        // Report Petugas
         Route::get('officers', [PJUController::class, 'officerPerformance'])->name('officers');
         Route::get('officers/{user}', [PJUController::class, 'officerDetail'])->name('officers.detail');
         Route::get('officers/{user}/export/excel', [PJUController::class, 'officerDetailExportExcel'])->name('officers.export.excel');
         Route::get('officers/{user}/export/pdf', [PJUController::class, 'officerDetailExportPdf'])->name('officers.export.pdf');
+
+        // Export
         Route::get('export/excel', [PJUController::class, 'exportExcel'])->name('export.excel');
         Route::get('export/pdf', [PJUController::class, 'exportPdf'])->name('export.pdf');
+
+        // Verifikator
         Route::get('verification', [PJUController::class, 'verificationIndex'])->name('verification');
         Route::post('{pju}/verify', [PJUController::class, 'verify']);
     });
 
+    // Resource PJU (CRUD)
     Route::resource('pju', PJUController::class);
 
-    // Trafo
+    // Modul Trafo
     Route::get('trafo/gallery', [TrafoController::class, 'gallery'])->name('trafo.gallery');
     Route::resource('trafo', TrafoController::class);
-
-    // User
-    Route::get('/dashboard', function () {
-        return view('pages.user.dashboard.index');
-    })->name('dashboard.index');
-
-    // Super Admin
-    Route::middleware(['role:super_admin'])->prefix('admin')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('pages.admin.dashboard.index');
-        })->name('dashboard.admin');
-    });
 });
 
 // ---=== TEMPLATE ===---
@@ -85,9 +105,9 @@ Route::get('/calendar', function () {
 })->name('calendar');
 
 // profile pages
-Route::get('/profile', function () {
-    return view('pages.profile', ['title' => 'Profile']);
-})->name('profile');
+// Route::get('/profile', function () {
+//     return view('pages.profile', ['title' => 'Profile']);
+// })->name('profile');
 
 // form pages
 Route::get('/form-elements', function () {
@@ -153,25 +173,3 @@ Route::get('/image', function () {
 Route::get('/videos', function () {
     return view('pages.ui-elements.videos', ['title' => 'Videos']);
 })->name('videos');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
