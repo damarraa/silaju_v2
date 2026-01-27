@@ -93,11 +93,17 @@ Route::middleware('auth')->group(function () {
     Route::resource('trafo', TrafoController::class);
 });
 
+Route::get('/', function () {
+    return auth()->check()
+        ? redirect()->route('dashboard.index')
+        : redirect()->route('login');
+});
+
 // ---=== TEMPLATE ===---
 // dashboard pages
-Route::get('/', function () {
-    return view('pages.dashboard.ecommerce', ['title' => 'E-commerce Dashboard']);
-})->name('dashboard');
+// Route::get('/', function () {
+//     return view('pages.dashboard.ecommerce', ['title' => 'E-commerce Dashboard']);
+// })->name('dashboard');
 
 // calender pages
 Route::get('/calendar', function () {

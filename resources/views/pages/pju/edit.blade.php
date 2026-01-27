@@ -17,86 +17,84 @@
     <div class="rounded-lg border border-gray-200 bg-white shadow-default dark:border-gray-800 dark:bg-gray-900">
 
         <form action="{{ route('pju.update', $pju->id) }}" method="POST" enctype="multipart/form-data" class="p-4 md:p-6.5"
-    x-data="{ 
-        statusPJU: '{{ old('status', $pju->status) }}',
-        previewImage: '{{ $pju->evidence ? asset('storage/' . $pju->evidence) : '' }}',
-        
-        handleFileChange(event) {
-            const file = event.target.files[0];
-            if (file) {
-                this.previewImage = URL.createObjectURL(file);
-            }
-        },
+            {{-- UPDATE DI SINI: Tambahkan lat & lng ke x-data --}}
+            x-data="{ 
+                statusPJU: '{{ old('status', $pju->status) }}',
+                lat: {{ old('latitude', $pju->latitude ?? -0.5071) }},
+                lng: {{ old('longitude', $pju->longitude ?? 101.4478) }},
+                previewImage: '{{ $pju->evidence ? asset('storage/' . $pju->evidence) : '' }}',
+                loadingVerify: false,
 
-        loadingVerify: false,
+                handleFileChange(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.previewImage = URL.createObjectURL(file);
+                    }
+                },
 
-        // --- UPDATE: SWEETALERT2 LOGIC ---
-        verifyData(status) {
-            const isApprove = status === 'approve';
-            const actionText = isApprove ? 'Memverifikasi' : 'Menolak';
-            const btnColor = isApprove ? '#10B981' : '#EF4444'; // Green vs Red
+                // --- SWEETALERT2 LOGIC ---
+                verifyData(status) {
+                    const isApprove = status === 'approve';
+                    const actionText = isApprove ? 'Memverifikasi' : 'Menolak';
+                    const btnColor = isApprove ? '#10B981' : '#EF4444'; 
 
-            // 1. Tampilkan Konfirmasi
-            Swal.fire({
-                title: 'Apakah Anda Yakin?',
-                text: `Anda akan ${actionText} data PJU ini.`,
-                icon: isApprove ? 'question' : 'warning',
-                showCancelButton: true,
-                confirmButtonColor: btnColor,
-                cancelButtonColor: '#6B7280',
-                confirmButtonText: `Ya, ${actionText}!`,
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    this.loadingVerify = true;
-
-                    // 2. Tampilkan Loading
                     Swal.fire({
-                        title: 'Memproses...',
-                        text: 'Mohon tunggu sebentar',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
+                        title: 'Apakah Anda Yakin?',
+                        text: `Anda akan ${actionText} data PJU ini.`,
+                        icon: isApprove ? 'question' : 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: btnColor,
+                        cancelButtonColor: '#6B7280',
+                        confirmButtonText: `Ya, ${actionText}!`,
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.loadingVerify = true;
 
-                    // 3. Kirim AJAX
-                    fetch('{{ url('pju/' . $pju->id . '/verify') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ status: status })
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            // 4. Sukses -> Tampilkan Pesan & Reload
                             Swal.fire({
-                                title: 'Berhasil!',
-                                text: `Status berhasil diperbarui menjadi ${isApprove ? 'Verified' : 'Rejected'}.`,
-                                icon: 'success',
-                                confirmButtonColor: '#3B82F6'
-                            }).then(() => {
-                                window.location.reload();
+                                title: 'Memproses...',
+                                text: 'Mohon tunggu sebentar',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
                             });
-                        } else {
-                            throw new Error('Gagal memproses request.');
+
+                            fetch('{{ url('pju/' . $pju->id . '/verify') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ status: status })
+                            })
+                            .then(response => {
+                                if (response.ok) {
+                                    Swal.fire({
+                                        title: 'Berhasil!',
+                                        text: `Status berhasil diperbarui menjadi ${isApprove ? 'Verified' : 'Rejected'}.`,
+                                        icon: 'success',
+                                        confirmButtonColor: '#3B82F6'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    throw new Error('Gagal memproses request.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire({
+                                    title: 'Gagal!',
+                                    text: 'Terjadi kesalahan saat memproses data.',
+                                    icon: 'error'
+                                });
+                                this.loadingVerify = false;
+                            });
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            title: 'Gagal!',
-                            text: 'Terjadi kesalahan saat memproses data.',
-                            icon: 'error'
-                        });
-                        this.loadingVerify = false;
                     });
                 }
-            });
-        }
-    }">
+            }">
             @csrf
             @method('PUT')
 
@@ -104,6 +102,7 @@
 
                 <div class="flex flex-col gap-6">
 
+                    {{-- 1. FOTO BUKTI --}}
                     <div class="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
                             1. Foto Bukti Lapangan
@@ -135,18 +134,23 @@
                         @error('evidence') <span class="text-xs text-error-500 mt-2 block">{{ $message }}</span> @enderror
                     </div>
 
+                    {{-- 2. KOORDINAT --}}
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
                             2. Titik Koordinat
                         </label>
                         
                         <div class="mb-4">
+                            {{-- Component Map Picker --}}
+                            {{-- Kita passing prop :lat & :lng untuk inisialisasi Map (PHP) --}}
+                            {{-- Input di dalam component akan binding ke x-data lat & lng (Alpine) --}}
                             <x-form.map-picker 
                                 :lat="old('latitude', $pju->latitude ?? -0.5071)" 
                                 :lng="old('longitude', $pju->longitude ?? 101.4478)" 
                             />
                         </div>
 
+                        {{-- Area & Rayon --}}
                         <div class="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                             <div>
                                 <label class="mb-1.5 block text-xs font-medium text-gray-500 uppercase">Unit Area</label>
@@ -175,6 +179,7 @@
                         </div>
                     </div>
 
+                    {{-- Wilayah Administrasi --}}
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -214,6 +219,7 @@
 
                 <div class="flex flex-col gap-6">
 
+                    {{-- 3. IDENTITAS PJU --}}
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
                             3. Identitas PJU
@@ -262,6 +268,7 @@
                         </div>
                     </div>
 
+                    {{-- 4. SPESIFIKASI TEKNIS --}}
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
                             4. Spesifikasi Teknis
@@ -288,6 +295,7 @@
                         </div>
                     </div>
 
+                    {{-- 5. OPERASIONAL --}}
                     <div>
                         <label class="mb-3 block text-sm font-bold text-gray-800 dark:text-white">
                             5. Operasional
@@ -351,8 +359,10 @@
                 </div>
             </div>
 
+            {{-- ACTION BUTTONS --}}
             <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-0 bg-white/95 backdrop-blur-sm p-4 border-t border-gray-200 dark:bg-gray-900/95 dark:border-gray-800 -mx-4 md:static md:bg-transparent md:p-0 md:border-none md:mx-0 z-50">
                 
+                {{-- Left: Verifikasi Buttons (Hanya Role tertentu) --}}
                 <div class="flex items-center gap-3 w-full sm:w-auto p-2 rounded-lg bg-gray-50 border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                     <div class="flex items-center gap-2 px-2">
                         <span class="text-xs font-bold text-gray-500 uppercase">Status:</span>
@@ -365,6 +375,8 @@
                         @endif
                     </div>
 
+                    {{-- Hanya tampil jika user adalah verifikator --}}
+                    @if(auth()->user()->hasRole('verifikator') || auth()->user()->hasRole('super_admin'))
                     <div class="flex gap-1">
                         <button type="button" @click="verifyData('approve')" :disabled="loadingVerify" 
                             class="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 transition flex items-center gap-1">
@@ -377,8 +389,10 @@
                             Reject
                         </button>
                     </div>
+                    @endif
                 </div>
 
+                {{-- Right: Submit Buttons --}}
                 <div class="flex gap-3 w-full sm:w-auto justify-end">
                     <a href="{{ route('pju.index') }}" class="flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
                         Batal

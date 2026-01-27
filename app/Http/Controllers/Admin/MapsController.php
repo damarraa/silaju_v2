@@ -15,7 +15,7 @@ class MapsController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PJU::with(['trafo:id,id_gardu,latitude,longitude', 'rayon:id,nama']);
+        $query = PJU::with(['trafo', 'rayon']);
 
         if ($request->filled('rayon_id')) {
             $query->where('rayon_id', $request->rayon_id);
@@ -27,39 +27,58 @@ class MapsController extends Controller
             $query->where('kondisi_lampu', $request->kondisi_lampu);
         }
 
-        $pjus = $query->whereHas('trafo', function ($q) {
-            $q->whereNotNull('latitude')->whereNotNull('longitude');
-        })->get();
+        $rawPjus = $query->orderBy('id')->get();
+        $pjusWithNumbers = $rawPjus->groupBy('trafo_id')->flatMap(function ($items) {
+            $sequence = 1;
+            return $items->map(function ($item) use (&$sequence) {
+                $item->nomor_trafo_specific = $sequence++;
+                return $item;
+            });
+        });
 
-        $groupedPjus = $pjus->groupBy('trafo_id');
+        $groupedByLocation = $pjusWithNumbers->groupBy(function ($item) {
+            $lat = $item->latitude ?? $item->trafo->latitude ?? 0;
+            $lng = $item->longitude ?? $item->trafo->longitude ?? 0;
+            return (string) $lat . '-' . (string) $lng;
+        });
 
         $pjuMarkers = [];
-        foreach ($groupedPjus as $trafoId => $items) {
+
+        foreach ($groupedByLocation as $locKey => $items) {
             foreach ($items as $index => $item) {
+                $lat = $item->latitude ?? $item->trafo->latitude ?? -0.5071;
+                $lng = $item->longitude ?? $item->trafo->longitude ?? 101.4478;
+
                 $pjuMarkers[] = [
                     'id' => $item->id,
-                    'nomor' => (string) ($index + 1),
-                    'lat' => (float) $item->trafo->latitude,
-                    'lng' => (float) $item->trafo->longitude,
+                    'nomor' => (string) $item->nomor_trafo_specific,
+                    'lat' => (float) $lat,
+                    'lng' => (float) $lng,
+                    'parent_lat' => (float) ($item->trafo->latitude ?? $lat),
+                    'parent_lng' => (float) ($item->trafo->longitude ?? $lng),
                     'total_siblings' => count($items),
                     'sibling_index' => $index,
-                    'title' => $item->id_pelanggan ?? 'No-ID',
+                    'title' => $item->id_pelanggan ?? 'Non-ID',
                     'status' => $item->status,
                     'kondisi' => $item->kondisi_lampu,
-                    'trafo_kode' => $item->trafo->kode_trafo ?? '-',
+                    'verification_status' => $item->verification_status,
+                    'trafo_kode' => $item->trafo->id_gardu ?? 'Tanpa Gardu',
                     'rayon' => $item->rayon->nama ?? '-',
                 ];
             }
         }
 
-        $trafoMarkers = $pjus->pluck('trafo')->unique('id')->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'kode' => $item->id_gardu,
-                'lat' => (float) $item->latitude,
-                'lng' => (float) $item->longitude,
-            ];
-        })->values();
+        $trafoMarkers = $rawPjus->pluck('trafo')
+            ->filter()
+            ->unique('id')
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'kode' => $item->id_gardu,
+                    'lat' => (float) $item->latitude,
+                    'lng' => (float) $item->longitude,
+                ];
+            })->values();
 
         $rayons = Rayon::orderBy('nama')->get();
         return view('pages.maps.index', compact('pjuMarkers', 'trafoMarkers', 'rayons'));
@@ -90,7 +109,6 @@ class MapsController extends Controller
 
         $query->whereHas('trafo', function ($q) use ($request) {
             $q->whereNotNull('latitude')->whereNotNull('longitude');
-
             if ($request->filled('kecamatan')) {
                 $q->where('kecamatan', $request->kecamatan);
             }
@@ -99,22 +117,41 @@ class MapsController extends Controller
             }
         });
 
-        $pjus = $query->get();
-        $groupedPjus = $pjus->groupBy('trafo_id');
+        $rawPjus = $query->orderBy('id')->get();
+        $pjusWithNumbers = $rawPjus->groupBy('trafo_id')->flatMap(function ($items) {
+            $sequence = 1;
+            return $items->map(function ($item) use (&$sequence) {
+                $item->nomor_trafo_specific = $sequence++;
+                return $item;
+            });
+        });
+
+        $groupedByLocation = $pjusWithNumbers->groupBy(function ($item) {
+            $lat = $item->latitude ?? $item->trafo->latitude ?? 0;
+            $lng = $item->longitude ?? $item->trafo->longitude ?? 0;
+            return (string) $lat . '-' . (string) $lng;
+        });
 
         $pjuMarkers = [];
-        foreach ($groupedPjus as $trafoId => $items) {
+
+        foreach ($groupedByLocation as $locKey => $items) {
             foreach ($items as $index => $item) {
+                $lat = $item->latitude ?? $item->trafo->latitude ?? -0.5071;
+                $lng = $item->longitude ?? $item->trafo->longitude ?? 101.4478;
+
                 $pjuMarkers[] = [
                     'id' => $item->id,
-                    'nomor' => (string) ($index + 1),
-                    'lat' => (float) $item->trafo->latitude,
-                    'lng' => (float) $item->trafo->longitude,
+                    'nomor' => (string) $item->nomor_trafo_specific,
+                    'lat' => (float) $lat,
+                    'lng' => (float) $lng,
+                    'parent_lat' => (float) ($item->trafo->latitude ?? $lat),
+                    'parent_lng' => (float) ($item->trafo->longitude ?? $lng),
                     'total_siblings' => count($items),
                     'sibling_index' => $index,
-                    'title' => $item->id_pelanggan ?? 'No-ID',
+                    'title' => $item->id_pelanggan ?? 'Non-ID',
                     'status' => $item->status,
                     'kondisi' => $item->kondisi_lampu,
+                    'verification_status' => $item->verification_status,
                     'trafo_kode' => $item->trafo->id_gardu ?? '-',
                     'rayon' => $item->rayon->nama ?? '-',
                     'kecamatan' => $item->trafo->kecamatan ?? '-',
@@ -123,14 +160,17 @@ class MapsController extends Controller
             }
         }
 
-        $trafoMarkers = $pjus->pluck('trafo')->unique('id')->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'kode' => $item->kode_trafo,
-                'lat' => (float) $item->latitude,
-                'lng' => (float) $item->longitude,
-            ];
-        })->values();
+        $trafoMarkers = $rawPjus->pluck('trafo')
+            ->filter()
+            ->unique('id')
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'kode' => $item->id_gardu,
+                    'lat' => (float) $item->latitude,
+                    'lng' => (float) $item->longitude,
+                ];
+            })->values();
 
         return view('pages.maps.area', compact('pjuMarkers', 'trafoMarkers', 'kecamatans', 'kelurahans'));
     }
@@ -140,7 +180,7 @@ class MapsController extends Controller
      */
     public function indexIdpel(Request $request)
     {
-        $query = PJU::with(['trafo:id,id_gardu,latitude,longitude', 'rayon:id,nama']);
+        $query = PJU::with(['trafo', 'rayon']);
 
         if ($request->filled('rayon_id')) {
             $query->where('rayon_id', $request->rayon_id);
@@ -153,35 +193,57 @@ class MapsController extends Controller
             $q->whereNotNull('latitude')->whereNotNull('longitude');
         })->get();
 
-        $groupedPjus = $pjus->groupBy('trafo_id');
+        $pjusWithNumbers = $pjus->groupBy('trafo_id')->flatMap(function ($items) {
+            $sequence = 1;
+            return $items->map(function ($item) use (&$sequence) {
+                $item->nomor_trafo_specific = $sequence++;
+                return $item;
+            });
+        });
+
+        $groupedByLocation = $pjusWithNumbers->groupBy(function ($item) {
+            $lat = $item->latitude ?? $item->trafo->latitude ?? 0;
+            $lng = $item->longitude ?? $item->trafo->longitude ?? 0;
+            return (string) $lat . '-' . (string) $lng;
+        });
 
         $pjuMarkers = [];
-        foreach ($groupedPjus as $trafoId => $items) {
+
+        foreach ($groupedByLocation as $locKey => $items) {
             foreach ($items as $index => $item) {
+                $lat = $item->latitude ?? $item->trafo->latitude ?? -0.5071;
+                $lng = $item->longitude ?? $item->trafo->longitude ?? 101.4478;
+
                 $pjuMarkers[] = [
                     'id' => $item->id,
-                    'nomor' => (string) ($index + 1),
-                    'lat' => (float) $item->trafo->latitude,
-                    'lng' => (float) $item->trafo->longitude,
+                    'nomor' => (string) $item->nomor_trafo_specific,
+                    'lat' => (float) $lat,
+                    'lng' => (float) $lng,
+                    'parent_lat' => (float) ($item->trafo->latitude ?? $lat),
+                    'parent_lng' => (float) ($item->trafo->longitude ?? $lng),
                     'total_siblings' => count($items),
                     'sibling_index' => $index,
                     'title' => $item->id_pelanggan ?? 'No-ID',
                     'status' => $item->status,
                     'kondisi' => $item->kondisi_lampu,
+                    'verification_status' => $item->verification_status,
                     'trafo_kode' => $item->trafo->id_gardu ?? '-',
                     'rayon' => $item->rayon->nama ?? '-',
                 ];
             }
         }
 
-        $trafoMarkers = $pjus->pluck('trafo')->unique('id')->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'kode' => $item->id_gardu,
-                'lat' => (float) $item->latitude,
-                'lng' => (float) $item->longitude,
-            ];
-        })->values();
+        $trafoMarkers = $pjus->pluck('trafo')
+            ->filter()
+            ->unique('id')
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'kode' => $item->id_gardu,
+                    'lat' => (float) $item->latitude,
+                    'lng' => (float) $item->longitude,
+                ];
+            })->values();
 
         $rayons = Rayon::orderBy('nama')->get();
         return view('pages.maps.idpel', compact('pjuMarkers', 'trafoMarkers', 'rayons'));
