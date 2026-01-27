@@ -4,18 +4,18 @@
     {{-- Container Map --}}
     <div id="map" class="h-[300px] w-full z-0 rounded-md"></div>
 
-    {{-- Dropdown Map Type --}}
+    {{-- Dropdown Map Type (Posisi Kiri Atas) --}}
     <select id="map-type-selector"
-        class="absolute top-3 right-3 z-10 rounded-md bg-white border border-gray-200 py-1.5 pl-3 pr-8 text-xs font-bold text-gray-700 shadow-lg focus:border-brand-500 focus:ring-brand-500 dark:bg-gray-800 dark:text-white dark:border-gray-600 cursor-pointer">
+        class="absolute top-3 left-3 z-10 rounded-md bg-white border border-gray-200 py-1.5 pl-3 pr-8 text-xs font-bold text-gray-700 shadow-lg focus:border-brand-500 focus:ring-brand-500 dark:bg-gray-800 dark:text-white dark:border-gray-600 cursor-pointer">
         <option value="roadmap">Roadmap</option>
         <option value="satellite">Satelit</option>
         <option value="hybrid">Hybrid</option>
         <option value="terrain">Terrain</option>
     </select>
 
-    {{-- Tombol Lokasi Saya --}}
+    {{-- Tombol Lokasi Saya (Posisi Kiri Bawah) --}}
     <button type="button" id="btn-get-loc"
-        class="absolute bottom-4 right-14 z-10 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-bold text-gray-700 shadow-lg border border-gray-200 hover:bg-gray-50 active:scale-95 transition dark:bg-gray-800 dark:text-white dark:border-gray-600">
+        class="absolute bottom-4 left-3 z-10 flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-bold text-gray-700 shadow-lg border border-gray-200 hover:bg-gray-50 active:scale-95 transition dark:bg-gray-800 dark:text-white dark:border-gray-600">
         <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -51,7 +51,6 @@
 
     <script>
         let map, marker;
-        // Ambil default value dari Blade props
         let currentLat = {{ $lat }};
         let currentLng = {{ $lng }};
 
@@ -67,14 +66,19 @@
                 zoom: 15,
                 center: myLatLng,
                 mapTypeId: 'roadmap',
-                streetViewControl: false,
-                mapTypeControl: false,
-                fullscreenControl: true,
-                zoomControl: true,
-                clickableIcons: false // Nonaktifkan klik pada POI Google agar tidak mengganggu picking
+
+                disableDefaultUI: true,
+                zoomControl: true,       // Tombol +/- (Pojok Kanan Bawah)
+                fullscreenControl: true, // Tombol Fullscreen (Pojok Kanan Atas)
+                mapTypeControl: false,   // Matikan tombol Map/Satellite bawaan (Ganti pakai dropdown kita)
+                streetViewControl: false,// Matikan Pegman (Orang Kuning)
+                cameraControl: false,    // Matikan kontrol kemiringan/rotasi (MapCameraControl)
+                rotateControl: false,    // Matikan kontrol putar
+                scaleControl: false,     // Matikan penggaris skala
+                clickableIcons: false // Pastikan Fullscreen mati
             });
 
-            // 2. Marker Inisialisasi
+            // Marker Inisialisasi
             marker = new google.maps.Marker({
                 position: myLatLng,
                 map: map,
@@ -85,19 +89,11 @@
 
             // --- EVENT LISTENERS ---
 
-            // A. Click to Move (Fitur Baru)
+            // A. Click to Move
             map.addListener("click", (mapsMouseEvent) => {
-                // Ambil koordinat dari event klik
                 const newPos = mapsMouseEvent.latLng;
-
-                // Pindahkan marker ke lokasi klik
                 marker.setPosition(newPos);
-
-                // Update form input
                 updateInputs(newPos.lat(), newPos.lng());
-
-                // Optional: Pan ke lokasi baru agar tetap di tengah
-                // map.panTo(newPos); 
             });
 
             // B. Marker Drag End
