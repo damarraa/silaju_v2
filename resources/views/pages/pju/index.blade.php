@@ -30,10 +30,12 @@
                     </div>
 
                     <div class="flex gap-2 w-full md:w-auto">
-                        <a href="{{ route('pju.create') }}" class="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition shadow-sm">
-                            <svg class="fill-current" width="16" height="16" viewBox="0 0 16 16"><path d="M15 7H9V1C9 0.4 8.6 0 8 0C7.4 0 7 0.4 7 1V7H1C0.4 7 0 7.4 0 8C0 8.6 0.4 9 1 9H7V15C7 15.6 7.4 16 8 16C8.6 16 9 15.6 9 15V9H15C15.6 9 16 8.6 16 8C16 7.4 15.6 7 15 7Z" /></svg>
-                            Input Data
-                        </a>
+                        @can('pju_create')
+                            <a href="{{ route('pju.create') }}" class="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 transition shadow-sm">
+                                <svg class="fill-current" width="16" height="16" viewBox="0 0 16 16"><path d="M15 7H9V1C9 0.4 8.6 0 8 0C7.4 0 7 0.4 7 1V7H1C0.4 7 0 7.4 0 8C0 8.6 0.4 9 1 9H7V15C7 15.6 7.4 16 8 16C8.6 16 9 15.6 9 15V9H15C15.6 9 16 8.6 16 8C16 7.4 15.6 7 15 7Z" /></svg>
+                                Input Data
+                            </a>
+                        @endcan
                         {{-- Tombol Excel --}}
                         <a href="{{ route('pju.export.excel', request()->query()) }}" target="_blank" 
                         class="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700 transition shadow-sm"
@@ -214,17 +216,21 @@
 
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="{{ route('pju.edit', $pju->id) }}" class="text-gray-500 hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-500">
-                                    <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24"><path d="M2.29 16.29L16.29 2.29C16.68 1.9 17.32 1.9 17.71 2.29L21.71 6.29C22.1 6.68 22.1 7.32 21.71 7.71L7.71 21.71C7.32 22.1 6.68 22.1 6.29 21.71L2.29 17.71C1.9 17.32 1.9 16.68 2.29 16.29ZM19.29 7L17 4.71L15 6.71L17.29 9L19.29 7ZM13 8.71L4.71 17L7 19.29L15.29 11L13 8.71Z"/></svg>
-                                </a>
+                                @can('pju_edit')
+                                    <a href="{{ route('pju.edit', $pju->id) }}" class="text-gray-500 hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-500">
+                                        <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24"><path d="M2.29 16.29L16.29 2.29C16.68 1.9 17.32 1.9 17.71 2.29L21.71 6.29C22.1 6.68 22.1 7.32 21.71 7.71L7.71 21.71C7.32 22.1 6.68 22.1 6.29 21.71L2.29 17.71C1.9 17.32 1.9 16.68 2.29 16.29ZM19.29 7L17 4.71L15 6.71L17.29 9L19.29 7ZM13 8.71L4.71 17L7 19.29L15.29 11L13 8.71Z"/></svg>
+                                    </a>
+                                @endcan
                                 
-                                <form action="{{ route('pju.destroy', $pju->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus data ini?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-500">
-                                        <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24"><path d="M19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4ZM6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19Z"/></svg>
-                                    </button>
-                                </form>
+                                @can('pju_delete')
+                                    <form action="{{ route('pju.destroy', $pju->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus data ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-500">
+                                            <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24"><path d="M19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4ZM6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19Z"/></svg>
+                                        </button>
+                                    </form>
+                                @endcan
                             </div>
                         </td>
                     </tr>

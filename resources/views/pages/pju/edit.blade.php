@@ -397,9 +397,12 @@
                     <a href="{{ route('pju.index') }}" class="flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
                         Batal
                     </a>
-                    <button type="submit" class="flex items-center justify-center rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 focus:ring-4 focus:ring-brand-500/20">
-                        Update Data
-                    </button>
+                    {{-- Hanya tampil jika user punya permission edit --}}
+                    @can('pju_edit')
+                        <button type="submit" class="flex items-center justify-center rounded-lg bg-brand-500 px-6 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-brand-600 focus:ring-4 focus:ring-brand-500/20">
+                            Update Data
+                        </button>
+                    @endcan
                 </div>
             </div>
 

@@ -94,9 +94,14 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/', function () {
-    return auth()->check()
-        ? redirect()->route('dashboard.index')
-        : redirect()->route('login');
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->hasRole(['super_admin', 'admin_up3', 'admin_ulp', 'verifikator'])) {
+            return redirect()->route('dashboard.admin');
+        }
+        return redirect()->route('dashboard.index');
+    }
+    return redirect()->route('login');
 });
 
 // ---=== TEMPLATE ===---

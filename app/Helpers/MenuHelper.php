@@ -14,6 +14,12 @@ class MenuHelper
             return [];
         }
 
+        $dashboardPath = '/dashboard';
+
+        if ($user->hasRole(['super_admin', 'admin_up3', 'admin_ulp', 'verifikator'])) {
+            $dashboardPath = '/admin/dashboard';
+        }
+
         $menuStructure = [
             [
                 'title' => 'MAIN MENU',
@@ -21,7 +27,7 @@ class MenuHelper
                     [
                         'name' => 'Dashboard',
                         'icon' => 'dashboard',
-                        'path' => '/admin/dashboard',
+                        'path' => $dashboardPath,
                         'permission' => 'dashboard'
                     ],
                 ],

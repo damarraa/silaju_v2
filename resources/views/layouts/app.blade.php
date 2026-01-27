@@ -8,6 +8,10 @@
 
     <title>{{ $title ?? 'Dashboard' }} | Silaju V2</title>
 
+    <!-- Logo Web Apps -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('streetlight.png') }}">
+    <link rel="shortcut icon" href="{{ asset('streetlight.ico') }}">
+
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
