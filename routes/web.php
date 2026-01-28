@@ -78,7 +78,10 @@ Route::middleware('auth')->group(function () {
 
         // Export
         Route::get('export/excel', [PJUController::class, 'exportExcel'])->name('export.excel');
+        // - Laporan PJU dan IDPEL.
         Route::get('export/pdf', [PJUController::class, 'exportPdf'])->name('export.pdf');
+        // - Laporan PJU dan Foto.
+        Route::get('export/pdfVisual', [PJUController::class, 'exportPdfVisual'])->name('export.pdfVisual');
 
         // Verifikator
         Route::get('verification', [PJUController::class, 'verificationIndex'])->name('verification');

@@ -219,8 +219,8 @@
                     </td>
 
                     <td style="text-align: center;">
-                        <strong>D:</strong> {{ $item->daya ?? '-' }} VA<br>
-                        <strong>W:</strong> {{ $item->watt ?? '-' }} Watt
+                        <strong>D:</strong> {{ $item->daya ?? '-' }}<br>
+                        <strong>W:</strong> {{ $item->watt ?? '-' }}
                     </td>
 
                     <td style="text-align: center;">

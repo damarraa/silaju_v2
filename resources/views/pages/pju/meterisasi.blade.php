@@ -19,10 +19,15 @@
     <div class="rounded-lg border border-gray-200 bg-white shadow-default dark:border-gray-800 dark:bg-gray-900">
 
         {{-- FILTER BAR --}}
-        <div class="border-b border-gray-200 p-5 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+        {{-- Kita gunakan AlpineJS untuk mengatur State Show/Hide --}}
+        <div class="border-b border-gray-200 p-5 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50" x-data="{ 
+                    {{-- Cek apakah ada parameter 'advanced' yang sedang aktif agar filter tetap terbuka saat reload --}}
+                    showAdvanced: {{ request()->anyFilled(['kabupaten', 'kecamatan', 'kelurahan', 'trafo_id', 'kondisi', 'verification_status']) ? 'true' : 'false' }} 
+                }">
+
             <form method="GET" action="{{ route('pju.meterisasi') }}" class="space-y-4">
 
-                {{-- Row 1: Search & Export --}}
+                {{-- Row 1: Search & Export (Selalu Tampil) --}}
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="relative w-full md:w-1/2">
                         <button class="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -38,73 +43,65 @@
                     </div>
 
                     <div class="flex gap-2 w-full md:w-auto">
+                        {{-- Tombol Toggle Filter --}}
+                        <button type="button" @click="showAdvanced = !showAdvanced"
+                            class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 transition shadow-sm">
+                            <svg class="w-4 h-4 transition-transform duration-200" :class="showAdvanced ? 'rotate-180' : ''"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                                </path>
+                            </svg>
+                            Filter Lanjutan
+                        </button>
+
                         <a href="{{ route('pju.export.excel', request()->query()) }}" target="_blank"
-                            class="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 text-sm font-bold text-white hover:bg-green-700 transition shadow-sm">
+                            class="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700 transition shadow-sm"
+                            title="Export Excel">
                             <svg class="fill-current" width="18" height="18" viewBox="0 0 20 20">
                                 <path
                                     d="M14.333 11.267c0 .267.133.533.333.733l2 2c.4.4 1.067.4 1.467 0 .4-.4.4-1.067 0-1.467l-.267-.266V2.667c0-.534-.466-1-1-1s-1 .466-1 1v9.6ZM13.067 16H2.933c-.533 0-1-.467-1-1V5c0-.533.467-1 1-1h6.2c.533 0 1-.467 1-1s-.467-1-1-1h-6.2c-1.667 0-3 1.333-3 3v10c0 1.667 1.333 3 3 3h10.133c1.667 0 3-1.333 3-3v-4.133c0-.534-.467-1-1-1s-1 .466-1 1V15c0 .533-.467 1-1 1Z" />
                             </svg>
-                            Excel
                         </a>
                         <a href="{{ route('pju.export.pdf', request()->query()) }}" target="_blank"
-                            class="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-sm font-bold text-white hover:bg-red-700 transition shadow-sm">
+                            class="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-sm font-bold text-white hover:bg-red-700 transition shadow-sm"
+                            title="Export PDF">
                             <svg class="fill-current" width="18" height="18" viewBox="0 0 20 20">
                                 <path
                                     d="M6 2C4.89543 2 4 2.89543 4 4V16C4 17.1046 4.89543 18 6 18H14C15.1046 18 16 17.1046 16 16V6L12 2H6Z"
                                     stroke="none" />
                                 <path d="M11 2V7H16" fill="white" fill-opacity="0.3" />
                             </svg>
-                            PDF
                         </a>
                     </div>
                 </div>
 
-                {{-- Row 2: Detailed Filters --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-
+                {{-- Row 2: Basic Filters (Area, Rayon, Status) --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {{-- 1. Area --}}
-                    <div class="relative">
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Area</label>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">UP3</label>
                         <select name="area_id" id="filter_area_id" onchange="this.form.submit()"
                             class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400">
-                            <option value="">Semua</option>
+                            <option value="">Semua UP3</option>
                             @foreach($areas as $area) <option value="{{ $area->id }}" {{ request('area_id') == $area->id ? 'selected' : '' }}>{{ $area->nama }}</option> @endforeach
                         </select>
                     </div>
 
                     {{-- 2. Rayon --}}
-                    <div class="relative">
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Rayon</label>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">ULP</label>
                         <select name="rayon_id" id="filter_rayon_id" onchange="this.form.submit()"
                             class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400 disabled:opacity-50">
-                            <option value="">Semua</option>
+                            <option value="">Semua ULP</option>
                         </select>
                     </div>
 
-                    {{-- 3. Gardu (NEW FILTER) --}}
-                    <div class="relative sm:col-span-2 lg:col-span-1 xl:col-span-1">
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Cari Gardu</label>
-                        <input list="trafo_list" name="trafo_id_input"
-                            value="{{ $trafos->where('id', request('trafo_id'))->first()->id_gardu ?? '' }}"
-                            placeholder="Ketik ID Gardu..." onchange="updateTrafoId(this)"
-                            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white transition shadow-sm">
-                        <input type="hidden" name="trafo_id" id="trafo_id_hidden" value="{{ request('trafo_id') }}">
-
-                        <datalist id="trafo_list">
-                            @foreach($trafos as $trafo)
-                                <option data-id="{{ $trafo->id }}" value="{{ $trafo->id_gardu }}">
-                                    {{ Str::limit($trafo->alamat, 30) }}
-                                </option>
-                            @endforeach
-                        </datalist>
-                    </div>
-
-                    {{-- 4. Status --}}
-                    <div class="relative">
+                    {{-- 3. Status --}}
+                    <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Status Meter</label>
                         <select name="status" onchange="this.form.submit()"
                             class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400">
-                            <option value="">Semua</option>
+                            <option value="">Semua Status</option>
                             <option value="meterisasi" {{ request('status') == 'meterisasi' ? 'selected' : '' }}>Meterisasi
                             </option>
                             <option value="non_meterisasi" {{ request('status') == 'non_meterisasi' ? 'selected' : '' }}>Non
@@ -112,9 +109,73 @@
                             <option value="ilegal" {{ request('status') == 'ilegal' ? 'selected' : '' }}>Ilegal</option>
                         </select>
                     </div>
+                </div>
 
-                    {{-- 5. Kondisi --}}
-                    <div class="relative">
+                {{-- Row 3: Advanced Filters (Hidden by Default) --}}
+                <div x-show="showAdvanced" x-collapse
+                    class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4 pt-2 border-t border-dashed border-gray-300 dark:border-gray-700">
+
+                    {{-- 4. Kabupaten --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Kabupaten</label>
+                        <select name="kabupaten" onchange="this.form.submit()"
+                            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400">
+                            <option value="">Semua</option>
+                            @foreach($kabupatens as $kab)
+                                <option value="{{ $kab }}" {{ request('kabupaten') == $kab ? 'selected' : '' }}>{{ $kab }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- 5. Kecamatan --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Kecamatan</label>
+                        <select name="kecamatan" onchange="this.form.submit()"
+                            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400 disabled:opacity-50"
+                            {{ empty($kecamatans) ? 'disabled' : '' }}>
+                            <option value="">Semua</option>
+                            @foreach($kecamatans as $kec)
+                                <option value="{{ $kec }}" {{ request('kecamatan') == $kec ? 'selected' : '' }}>{{ $kec }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- 6. Kelurahan --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Kelurahan</label>
+                        <select name="kelurahan" onchange="this.form.submit()"
+                            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400 disabled:opacity-50"
+                            {{ empty($kelurahans) ? 'disabled' : '' }}>
+                            <option value="">Semua</option>
+                            @foreach($kelurahans as $kel)
+                                <option value="{{ $kel }}" {{ request('kelurahan') == $kel ? 'selected' : '' }}>{{ $kel }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- 7. Gardu --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Cari Gardu</label>
+                        <input list="trafo_list" name="trafo_id_input"
+                            value="{{ $trafos->where('id', request('trafo_id'))->first()->id_gardu ?? '' }}"
+                            placeholder="ID Gardu..." onchange="updateTrafoId(this)"
+                            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white transition shadow-sm">
+                        <input type="hidden" name="trafo_id" id="trafo_id_hidden" value="{{ request('trafo_id') }}">
+
+                        <datalist id="trafo_list">
+                            @foreach($trafos as $trafo)
+                                <option data-id="{{ $trafo->id }}" value="{{ $trafo->id_gardu }}">
+                                    {{ Str::limit($trafo->alamat, 20) }}
+                                </option>
+                            @endforeach
+                        </datalist>
+                    </div>
+
+                    {{-- 8. Kondisi --}}
+                    <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Kondisi</label>
                         <select name="kondisi" onchange="this.form.submit()"
                             class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400">
@@ -124,21 +185,34 @@
                         </select>
                     </div>
 
-                    {{-- 6. Verifikasi --}}
-                    <div class="relative">
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Approval</label>
-                        <select name="verification_status" onchange="this.form.submit()"
-                            class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400">
-                            <option value="">Semua</option>
-                            <option value="pending" {{ request('verification_status') == 'pending' ? 'selected' : '' }}>
-                                Menunggu</option>
-                            <option value="verified" {{ request('verification_status') == 'verified' ? 'selected' : '' }}>
-                                Terverifikasi</option>
-                            <option value="rejected" {{ request('verification_status') == 'rejected' ? 'selected' : '' }}>
-                                Ditolak</option>
-                        </select>
+                    {{-- 9. Approval & Reset --}}
+                    <div class="flex gap-2">
+                        <div class="w-full">
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Approval</label>
+                            <select name="verification_status" onchange="this.form.submit()"
+                                class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white cursor-pointer hover:border-gray-400">
+                                <option value="">Semua</option>
+                                <option value="pending" {{ request('verification_status') == 'pending' ? 'selected' : '' }}>
+                                    Menunggu</option>
+                                <option value="verified" {{ request('verification_status') == 'verified' ? 'selected' : '' }}>
+                                    Valid</option>
+                                <option value="rejected" {{ request('verification_status') == 'rejected' ? 'selected' : '' }}>
+                                    Tolak</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <a href="{{ route('pju.meterisasi') }}"
+                                class="h-11 w-11 flex items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 transition"
+                                title="Reset Filter">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </a>
+                        </div>
                     </div>
                 </div>
+
             </form>
         </div>
 
@@ -189,7 +263,7 @@
                                         {{ $pju->alamat }}
                                     </span>
                                     <span class="text-xs text-gray-500 mt-0.5 uppercase tracking-wider">
-                                        {{ $pju->area->nama ?? '-' }} — {{ $pju->rayon->nama ?? '-' }}
+                                        {{ $pju->kelurahan ?? '-' }}, {{ $pju->kecamatan ?? '-' }}
                                     </span>
                                 </div>
                             </td>
@@ -243,7 +317,25 @@
 
 @push('scripts')
     <script>
-        // AJAX Rayon (Sama seperti sebelumnya, wajib ada agar filter Rayon jalan)
+        // JS untuk handle datalist gardu
+        function updateTrafoId(input) {
+            const hiddenInput = document.getElementById('trafo_id_hidden');
+            const list = document.getElementById('trafo_list');
+            const options = list.options;
+            let found = false;
+
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === input.value) {
+                    hiddenInput.value = options[i].getAttribute('data-id');
+                    found = true;
+                    input.form.submit();
+                    break;
+                }
+            }
+            if (!found) hiddenInput.value = '';
+        }
+
+        // AJAX Rayon
         document.addEventListener("DOMContentLoaded", function () {
             const sArea = document.getElementById('filter_area_id');
             const sRayon = document.getElementById('filter_rayon_id');

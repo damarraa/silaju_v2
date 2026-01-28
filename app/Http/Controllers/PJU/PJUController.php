@@ -249,7 +249,55 @@ class PJUController extends Controller
      */
     public function meterisasiIndex(Request $request)
     {
-        $query = $this->getFilteredQuery($request);
+        $query = PJU::with(['area', 'rayon', 'trafo']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('id_pelanggan', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhere('merk_lampu', 'like', "%{$search}%")
+                    ->orWhereHas('trafo', function ($tr) use ($search) {
+                        $tr->where('id_gardu', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('area_id'))
+            $query->where('area_id', $request->area_id);
+        if ($request->filled('rayon_id'))
+            $query->where('rayon_id', $request->rayon_id);
+        if ($request->filled('trafo_id'))
+            $query->where('trafo_id', $request->trafo_id);
+        if ($request->filled('status'))
+            $query->where('status', $request->status);
+        if ($request->filled('kondisi'))
+            $query->where('kondisi_lampu', $request->kondisi);
+        if ($request->filled('verification_status'))
+            $query->where('verification_status', $request->verification_status);
+
+        if ($request->filled('kabupaten'))
+            $query->where('kabupaten', $request->kabupaten);
+        if ($request->filled('kecamatan'))
+            $query->where('kecamatan', $request->kecamatan);
+        if ($request->filled('kelurahan'))
+            $query->where('kelurahan', $request->kelurahan);
+
+        $kabupatens = PJU::select('kabupaten')->distinct()->whereNotNull('kabupaten')->orderBy('kabupaten')->pluck('kabupaten');
+
+        $kecamatans = [];
+        if ($request->filled('kabupaten')) {
+            $kecamatans = PJU::select('kecamatan')
+                ->where('kabupaten', $request->kabupaten)
+                ->distinct()->whereNotNull('kecamatan')->orderBy('kecamatan')->pluck('kecamatan');
+        }
+
+        $kelurahans = [];
+        if ($request->filled('kecamatan')) {
+            $kelurahans = PJU::select('kelurahan')
+                ->where('kecamatan', $request->kecamatan)
+                ->distinct()->whereNotNull('kelurahan')->orderBy('kelurahan')->pluck('kelurahan');
+        }
 
         $pjus = $query->orderByRaw('id_pelanggan IS NULL')
             ->orderBy('id_pelanggan', 'asc')
@@ -258,7 +306,14 @@ class PJUController extends Controller
 
         $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
         $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
-        return view('pages.pju.meterisasi', compact('pjus', 'areas', 'trafos'));
+        return view('pages.pju.meterisasi', compact(
+            'pjus',
+            'areas',
+            'trafos',
+            'kabupatens',
+            'kecamatans',
+            'kelurahans'
+        ));
     }
 
     /**
@@ -266,7 +321,56 @@ class PJUController extends Controller
      */
     public function visualIndex(Request $request)
     {
-        $query = $this->getFilteredQuery($request);
+        $query = PJU::with(['area', 'rayon', 'trafo']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('id_pelanggan', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhere('merk_lampu', 'like', "%{$search}%")
+                    ->orWhereHas('trafo', function ($tr) use ($search) {
+                        $tr->where('id_gardu', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('area_id'))
+            $query->where('area_id', $request->area_id);
+        if ($request->filled('rayon_id'))
+            $query->where('rayon_id', $request->rayon_id);
+        if ($request->filled('trafo_id'))
+            $query->where('trafo_id', $request->trafo_id);
+        if ($request->filled('status'))
+            $query->where('status', $request->status);
+        if ($request->filled('kondisi'))
+            $query->where('kondisi_lampu', $request->kondisi);
+        if ($request->filled('verification_status'))
+            $query->where('verification_status', $request->verification_status);
+
+        if ($request->filled('kabupaten'))
+            $query->where('kabupaten', $request->kabupaten);
+        if ($request->filled('kecamatan'))
+            $query->where('kecamatan', $request->kecamatan);
+        if ($request->filled('kelurahan'))
+            $query->where('kelurahan', $request->kelurahan);
+
+        $kabupatens = PJU::select('kabupaten')->distinct()->whereNotNull('kabupaten')->orderBy('kabupaten')->pluck('kabupaten');
+
+        $kecamatans = [];
+        if ($request->filled('kabupaten')) {
+            $kecamatans = PJU::select('kecamatan')
+                ->where('kabupaten', $request->kabupaten)
+                ->distinct()->whereNotNull('kecamatan')->orderBy('kecamatan')->pluck('kecamatan');
+        }
+
+        $kelurahans = [];
+        if ($request->filled('kecamatan')) {
+            $kelurahans = PJU::select('kelurahan')
+                ->where('kecamatan', $request->kecamatan)
+                ->distinct()->whereNotNull('kelurahan')->orderBy('kelurahan')->pluck('kelurahan');
+        }
+
         $pjus = $query->latest()
             ->paginate(10)
             ->withQueryString();
@@ -274,7 +378,14 @@ class PJUController extends Controller
         $areas = Area::where('wilayah_id', 1)->orderBy('nama')->get();
         $trafos = Trafo::select('id', 'id_gardu', 'alamat')->get();
 
-        return view('pages.pju.visual', compact('pjus', 'areas', 'trafos'));
+        return view('pages.pju.visual', compact(
+            'pjus',
+            'areas',
+            'trafos',
+            'kabupatens',
+            'kecamatans',
+            'kelurahans'
+        ));
     }
 
     /**
@@ -568,16 +679,32 @@ class PJUController extends Controller
     }
 
     /**
-     * Export PDF.
+     * Export PDF - Laporan PJU dan IDPEL.
      */
     public function exportPdf(Request $request)
     {
         $pjus = $this->getFilteredQuery($request)->get();
 
-        $pdf = Pdf::loadView('exports.pju_pdf', compact('pjus'))
+        $pdf = Pdf::loadView('exports.pdfsilaju', compact('pjus'))
             ->setPaper('a4', 'landscape');
 
         return $pdf->download('laporan-pju-' . date('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export PDF - Laporan PJU dan Foto.
+     */
+    public function exportPdfVisual(Request $request)
+    {
+        $pjus = $this->getFilteredQuery($request)->get();
+
+        $groupedPjus = $pjus->groupBy('trafo_id');
+        $trafos = Trafo::whereIn('id', $groupedPjus->keys())->get()->keyBy('id');
+
+        $pdf = Pdf::loadView('exports.pju_foto', compact('groupedPjus', 'trafos'))
+            ->setPaper('a4', 'potrait');
+
+        return $pdf->download('lembar-pengesahan-' . date('Y-m-d') . '.pdf');
     }
 
     /**
@@ -695,32 +822,32 @@ class PJUController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('id_pelanggan', 'like', "%{$search}%")
                     ->orWhere('alamat', 'like', "%{$search}%")
-                    ->orWhere('merk_lampu', 'like', "%{$search}%");
+                    ->orWhere('merk_lampu', 'like', "%{$search}%")
+                    ->orWhereHas('trafo', function ($tr) use ($search) {
+                        $tr->where('id_gardu', 'like', "%{$search}%");
+                    });
             });
         }
 
-        if ($request->filled('trafo_id')) {
-            $query->where('trafo_id', $request->trafo_id);
-        }
+        $filters = [
+            'area_id',
+            'rayon_id',
+            'trafo_id',
+            'status',
+            'kondisi_lampu' => 'kondisi',
+            'verification_status',
+            'kabupaten',
+            'kecamatan',
+            'kelurahan'
+        ];
 
-        if ($request->filled('area_id')) {
-            $query->where('area_id', $request->area_id);
-        }
+        foreach ($filters as $dbCol => $reqName) {
+            $requestKey = is_int($dbCol) ? $reqName : $reqName;
+            $column = is_int($dbCol) ? $reqName : $dbCol;
 
-        if ($request->filled('rayon_id')) {
-            $query->where('rayon_id', $request->rayon_id);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('kondisi')) {
-            $query->where('kondisi_lampu', $request->kondisi);
-        }
-
-        if ($request->filled('verification_status')) {
-            $query->where('verification_status', $request->verification_status);
+            if ($request->filled($requestKey)) {
+                $query->where($column, $request->$requestKey);
+            }
         }
 
         return $query;
